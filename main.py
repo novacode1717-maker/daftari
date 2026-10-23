@@ -661,7 +661,7 @@ def download_backup(password: str = "", file: str = ""):
     latest = sorted(all_files, key=lambda x: os.path.getmtime(x), reverse=True)[0]
     return FileResponse(latest, filename=os.path.basename(latest))
 
-if name == "__main__":   
+if __name__== "__main__":   
     port = int(os.environ.get("PORT", 8000))
     url = f"http://localhost:{port}"
     print(f"=== دفتري يشتغل على {url} ===")
