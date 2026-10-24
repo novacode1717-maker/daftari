@@ -1,0 +1,9 @@
+{
+  "name": "دفتري",
+  "short_name": "دفتري",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#FFD700",
+  "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes": "192x192","type": "image/png"}]
+}
