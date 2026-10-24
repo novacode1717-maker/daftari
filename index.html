@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دفتري</title>
+<link rel="manifest" href="/manifest.json">
+ <title>دفتري</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body style="background:#050505;color:#FFD700;text-align:center;padding:20px">
@@ -54,6 +55,9 @@ load();
 </script>
 </body>
 </html>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
+</script>
       
    
 
