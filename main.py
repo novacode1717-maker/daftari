@@ -127,6 +127,20 @@ def get_manifest():
     if os.path.exists("static/manifest.json"):
         return FileResponse("static/manifest.json")
     return {"error": "manifest not found"}
+
+    @app.get("/sw.js")
+def sw():
+    if os.path.exists("sw.js"):
+        return FileResponse("sw.js", media_type="application/javascript")
+    return {"error": "not found"}
+
+@app.get("/manifest.json")
+def manifest():
+    if os.path.exists("manifest.json"):
+        return FileResponse("manifest.json")
+    if os.path.exists("static/manifest.json"):
+        return FileResponse("static/manifest.json")
+    return {"name": "دفتري"}
     
     <html dir="rtl" style="background:#0a0a0a;color:#FFD700;text-align:center;padding:40px">
     <head>
