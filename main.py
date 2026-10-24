@@ -68,8 +68,8 @@ def save_json(filename, data):
 users_db: Dict[str, dict] = load_json("users.json", {})
 otp_db: Dict[str, str] = {}
 store_customers_db: Dict[str, list]= load_json("customers.json", {})
-help_tickets_db: list[dict] = load_json("help_tickes.josn",[])
-notification_db: list [dict]= load_json("notification.json",[])
+help_tickets_db: list[dict] = load_json("help_tickets.josn",[])
+notifications_db: list [dict]= load_json("notifications.json",[])
 
 ADMIN_PASSWORD = "admin123"
 
@@ -127,13 +127,7 @@ def get_manifest():
     if os.path.exists("static/manifest.json"):
         return FileResponse("static/manifest.json")
     return {"error": "manifest not found"}
-
-@app.get("/", response_class=HTMLResponse)
-def home():
-    from fastapi.responses import FileResponse
-    if os.path.exists("index.html"):
-        return FileResponse("index.html")
-    return """
+    
     <html dir="rtl" style="background:#0a0a0a;color:#FFD700;text-align:center;padding:40px">
     <head>
         <title>دفتري</title>
@@ -624,42 +618,6 @@ def download_backup(password: str = "", file: str = ""):
     @app.get("/health")
     def health_check():
      return {"status": "ok", "app": "دفتري", "version": "2.0.0", "systems": ["Android", "iPhone", "Mac", "Windows", "Linux"]}
-
-# ===== Admin Backups - النسخ الاحتياطي =====
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-
-@app.get("/admin/backups/list")
-def list_backups(password: str = ""):
-    if password != ADMIN_PASSWORD:
-        return {"error": "باسورد خطأ"}
-    backups = []
-    for root, dirs, files in os.walk("data/backups"):
-        for file in files:
-            path = os.path.join(root, file)
-            try:
-                size = os.path.getsize(path)
-            except:
-                size = 0
-            backups.append({"الملف": path, "الحجم": size})
-    backups = sorted(backups, key=lambda x: x["الملف"], reverse=True)
-    if not backups:
-        return {"رسالة": "لا توجد نسخ احتياطية بعد", "النسخ": []}
-    return {"عدد_النسخ": len(backups), "النسخ": backups}
-
-@app.get("/admin/backup/download")
-def download_backup(password: str = "", file: str = ""):
-    if password != ADMIN_PASSWORD:
-        return {"error": "باسورد خطأ"}
-    if file and os.path.exists(file):
-        return FileResponse(file, filename=os.path.basename(file))
-    all_files = []
-    for root, dirs, files in os.walk("data/backups"):
-        for f in files:
-            all_files.append(os.path.join(root, f))
-    if not all_files:
-        return {"error": "لا توجد نسخ"}
-    latest = sorted(all_files, key=lambda x: os.path.getmtime(x), reverse=True)[0]
-    return FileResponse(latest, filename=os.path.basename(latest))
 
 if __name__== "__main__":   
     port = int(os.environ.get("PORT", 8000))
