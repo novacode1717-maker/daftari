@@ -14,26 +14,48 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 .gold-border{border:2px solid #FFD700;box-shadow:0 0 20px rgba(255,215,0,0.3)}
 .gold-glow:hover{box-shadow:0 0 30px rgba(255,215,0,0.6);transform:translateY(-2px);transition:0.3s}
 .input-gold{background:#111;border:1px solid #333;color:#FFD700}
+.input-gold:focus{border-color:#FFD700;outline:none;box-shadow:0 0 10px rgba(255,215,0,0.3)}
+.tab-btn.active{background:#FFD700;color:#000;font-weight:900}
 </style>
 </head>
 <body class="min-h-screen">
 <div class="text-center pt-10 pb-6">
 <h1 class="text-4xl font-black">دفتري</h1>
-<p class="text-gray-400">نظام الاقساط الفاخر - اسود وذهبي</p><button class="bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
-<button class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
+<p class="text-gray-400 mt-2">نظام الاقساط الفاخر - اسود وذهبي</p>
 </div>
+
+<div class="flex justify-center gap-2 px-4 mb-6 flex-wrap">
+<button onclick="showTab('home',this)" class="tab-btn active bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
+<button onclick="showTab('customers',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
+<button onclick="showTab('add',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">اضافة زبون</button>
+<button onclick="showTab('help',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">مركز المساعدة</button>
 </div>
-<div class="flex justify-center gap-2 px-4 mb-6">
-<button onclick="showTab('home',this)" class="bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
-<button onclick="showTab('customers',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
-<button onclick="showTab('add',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">اضافة زبون</button>
-<button onclick="showTab('help',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">مركز المساعدة</button>
-</div>
-<div class="px-6">
+
+<div id="home" class="tab px-6">
 <div class="bg-[#111] gold-border rounded-2xl p-6 text-center">
-<h2 class="text-2xl font-bold">مرحبا بك في دفتري 👑</h2>
+<h2 class="text-2xl font-bold mb-2">مرحبا بك في دفتري 👑</h2>
 <p class="text-gray-400">النظام الفاخر لادارة الاقساط</p>
+<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="bg-[#050505] border border-[#FFD700]/30 rounded-xl p-4">
+<p class="text-gray-400 text-sm">عدد الزبائن</p>
+<p id="count" class="text-2xl font-black">0</p>
+</div>
+<div class="bg-[#050505] border border-[#FFD700]/30 rounded-xl p-4">
+<p class="text-gray-400 text-sm">المتبقي الكلي</p>
+<p id="total" class="text-2xl font-black">0 د.ع</p>
 </div>
 </div>
-</body>
-</html>
+<input id="ownerPhone" placeholder="رقم صاحب المتجر" class="input-gold w-full mt-6 p-3 rounded-xl text-center" />
+<button onclick="loadCustomers()" class="gold-gradient text-black w-full mt-3 p-3 rounded-xl font-bold">تحميل البيانات</button>
+</div>
+</div>
+
+<div id="customers" class="tab hidden px-6">
+<div id="customersList" class="space-y-4"></div>
+</div>
+
+<div id="add" class="tab hidden px-6">
+<div class="bg-[#111] gold-border rounded-2xl p-6">
+<h3 class="font-bold text-xl mb-4">اضافة زبون جديد</h3>
+<input id="cName" placeholder="اسم الزبون" class="input-gold w-full p-3 rounded-xl mb-3">
+<input id="cPhone" placeholder="رقم الزبون" class="input-gold w-full p-3 rounded-xl mb
