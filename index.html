@@ -19,11 +19,15 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 <body class="min-h-screen">
 <div class="text-center pt-10 pb-6">
 <h1 class="text-4xl font-black">دفتري</h1>
-<p class="text-gray-400">نظام الاقساط الفاخر - اسود وذهبي</p>
+<p class="text-gray-400">نظام الاقساط الفاخر - اسود وذهبي</p><button class="bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
+<button class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
+</div>
 </div>
 <div class="flex justify-center gap-2 px-4 mb-6">
-<button class="bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
-<button class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
+<button onclick="showTab('home',this)" class="bg-[#FFD700] text-black px-5 py-2 rounded-xl font-bold">الرئيسية</button>
+<button onclick="showTab('customers',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">زبائني</button>
+<button onclick="showTab('add',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">اضافة زبون</button>
+<button onclick="showTab('help',this)" class="bg-[#111] border border-[#FFD700] px-5 py-2 rounded-xl">مركز المساعدة</button>
 </div>
 <div class="px-6">
 <div class="bg-[#111] gold-border rounded-2xl p-6 text-center">
