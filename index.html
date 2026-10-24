@@ -1,79 +1,59 @@
-gold-border rounded-2xl p-5 mb-4">
-<h3 class="font-bold text-lg mb-3">مركز المساعدة</h3>
-<input id="hName" placeholder="اسمك" class="input-gold w-full p-2 rounded-xl mb-2 text-sm">
-<input id="hPhone" placeholder="رقمك" class="input-gold w-full p-2 rounded-xl mb-2 text-sm">
-<input id="hSubject" placeholder="الموضوع" class="input-gold w-full p-2 rounded-xl mb-2 text-sm">
-<textarea id="hMessage" placeholder="رسالتك" class="input-gold w-full p-2 rounded-xl mb-2 h-20 text-sm"></textarea>
-<button onclick="sendHelp()" class="gold-gradient text-black w-full p-2 rounded-xl font-bold text-sm">ارسال</button>
-</div>
-<div id="tickets" class="space-y-2"></div>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دفتري</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="background:#050505;color:#FFD700;text-align:center;padding:20px">
+<h1 style="font-size:32px;font-weight:900">دفتري 👑</h1>
+<p>نظام الاقساط الفاخر</p>
+
+<div style="background:#111;border:2px solid #FFD700;border-radius:16px;padding:20px;margin-top:20px">
+<h3>اضافة زبون جديد</h3>
+<input id="cName" placeholder="اسم الزبون" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:90%;margin:5px;border-radius:8px">
+<input id="cFather" placeholder="اسم اب الزبون" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:90%;margin:5px;border-radius:8px">
+<input id="store" placeholder="اسم المتجر" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:90%;margin:5px;border-radius:8px">
+<input id="cPhone" placeholder="رقم الزبون" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:90%;margin:5px;border-radius:8px">
+<input id="cItem" placeholder="نوع المادة" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:90%;margin:5px;border-radius:8px">
+<input id="cTotal" type="number" placeholder="المبلغ الكلي" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:28%;margin:5px;border-radius:8px">
+<input id="cPaid" type="number" placeholder="المدفوع" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:28%;margin:5px;border-radius:8px">
+<input id="cMonthly" type="number" placeholder="القسط" style="background:#000;color:#FFD700;border:1px solid #333;padding:10px;width:28%;margin:5px;border-radius:8px">
+<br>
+<button onclick="add()" style="background:linear-gradient(135deg,#FFD700,#D4AF37);color:#000;padding:12px;width:95%;border-radius:12px;font-weight:bold;margin-top:10px">اضافة</button>
 </div>
 
-</div>
+<div id="list" style="margin-top:20px"></div>
 
 <script>
-let currentPhone = localStorage.getItem('currentPhone')  '';
-let currentUser = null;
-
-function showAuthTab(id, btn){
- document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden'));
- document.getElementById(id+'Tab').classList.remove('hidden');
- document.querySelectorAll('.auth-tab').forEach(b=>{b.classList.remove('active','bg-[#FFD700]','text-black');});
- if(btn){btn.classList.add('active','bg-[#FFD700]','text-black');}
-}
-
-function showTab(id, btn){
- document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden'));
- const target = document.getElementById(id);
- if(target) target.classList.remove('hidden');
- document.querySelectorAll('.tab-btn').forEach(b=>{b.className='tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-sm';});
- if(btn){btn.className='tab-btn active bg-[#FFD700] text-black px-4 py-2 rounded-xl font-bold text-sm';}
- if(id==='customers') loadCustomers();
- if(id==='help') loadTickets();
-}
-
-async function doRegister(){
- const data={
-  first_name: document.getElementById('regFirst').value.trim(),
-  second_name: document.getElementById('regSecond').value.trim(),
-  last_name: document.getElementById('regLast').value.trim(),
-  store_name: document.getElementById('regStore').value.trim(),
-  phone: document.getElementById('regPhone').value.trim(),
-  password: document.getElementById('regPass').value.trim()
+let owner = localStorage.getItem('owner')'07700000000';
+async function add(){
+ let data={
+  owner_phone: owner,
+  store_name: document.getElementById('store').value,
+  customer_name: document.getElementById('cName').value,
+  father_name: document.getElementById('cFather').value,
+  customer_phone: document.getElementById('cPhone').value,
+  item_type: document.getElementById('cItem').value,
+  total_amount: parseInt(document.getElementById('cTotal').value)0,
+  first_payment: parseInt(document.getElementById('cPaid').value)0,
+  monthly_installment: parseInt(document.getElementById('cMonthly').value)0
  };
- if(!data.first_name!data.phone||!data.password){alert('اكمل الحقول');return;}
- try{
-  const res=await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  const r=await res.json();
-  if(r.error){alert(r.error);return;}
-  currentPhone=data.phone;
-  document.getElementById('otpInfo').innerText=كود واتساب للرقم ${data.phone};
-  document.getElementById('otpDemo').innerText=كود تجريبي: ${r.demo_otp||''};
-  document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden'));
-  document.getElementById('otpTab').classList.remove('hidden');
-  localStorage.setItem('currentPhone', currentPhone);
- }catch(e){alert(e.message)}
+ await fetch('/store/add-customer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+ alert('تم ✅');
+ load();
 }
-
-async function doLogin(){
- const data={phone: document.getElementById('loginPhone').value.trim(), password: document.getElementById('loginPass').value.trim()};
- if(!data.phone||!data.password){alert('ادخل الرقم وكلمة السر');return;}
- try{
-  const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  const r=await res.json();
-  if(r.error){alert(r.error);return;}
-  currentPhone=data.phone;
-  document.getElementById('otpInfo').innerText=كود واتساب للرقم ${data.phone};
-  document.getElementById('otpDemo').innerText=كود تجريبي: ${r.demo_otp||''};
-  document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden'));
-  document.getElementById('otpTab').classList.remove('hidden');
-  localStorage.setItem('currentPhone', currentPhone);
- }catch(e){alert(e.message)}
+async function load(){
+ let res=await fetch(/store/${owner}/customers);
+ let d=await res.json();
+ let list=d['الزبائن']||[];
+ document.getElementById('list').innerHTML=list.map(c=><div style="background:#111;border:1px solid #FFD700;border-radius:12px;padding:10px;margin:5px"><b>${c['اسم_الزبون']} بن ${c['اسم_الاب']||''}</b> - ${c['المتبقي']} د.ع متبقي<br><small>${c['نوع_المادة']} - ${c['اسم_المتجر']}</small></div>).join('');
 }
-
-async function verifyOtp(){
- const code
-         
+load();
+</script>
+</body>
+</html>
       
    
 
