@@ -5,22 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>دفتري - نظام الاقساط</title>
 <link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/static/icon.png">
+<link rel="apple-touch-icon" href="/static/icon-192x192.png">
 <meta name="theme-color" content="#FFD700">
+<meta name="background-color" content="#050505">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 .gold-gradient{background:linear-gradient(135deg,#FFD700,#D4AF37)}
 .gold-border{border:2px solid #FFD700;box-shadow:0 0 20px rgba(255,215,0,0.3)}
+.gold-glow:hover{box-shadow:0 0 30px rgba(255,215,0,0.6);transform:translateY(-2px);transition:0.3s}
 .input-gold{background:#111;border:1px solid #333;color:#FFD700}
-.input-gold:focus{border-color:#FFD700;outline:none}
+.input-gold:focus{border-color:#FFD700;outline:none;box-shadow:0 0 10px rgba(255,215,0,0.3)}
 .auth-tab.active{background:#FFD700;color:#000;font-weight:900}
 .tab-btn.active{background:#FFD700;color:#000;font-weight:900}
 </style>
 </head>
 <body class="min-h-screen">
+<!-- Auth Screen - FIXED with showAuth('login',this) -->
 <div id="auth" class="min-h-screen p-4">
-<div class="text-center pt-8 pb-4"><h1 class="text-4xl font-black">دفتري 👑</h1><p class="text-gray-500 text-sm mt-2">نظام الاقساط الفاخر - 400 سطر</p></div>
+<div class="text-center pt-8 pb-4">
+<h1 class="text-4xl font-black">دفتري 👑</h1>
+<p class="text-gray-500 text-sm mt-2">نظام الاقساط الفاخر - 400 سطر كامل</p>
+</div>
 <div class="flex bg-[#111] rounded-xl p-1 mt-6 max-w-md mx-auto border border-[#333]">
 <button onclick="showAuth('login',this)" class="auth-tab active bg-[#FFD700] text-black flex-1 py-2.5 rounded-lg font-bold text-sm">دخول</button>
 <button onclick="showAuth('register',this)" class="auth-tab flex-1 py-2.5 rounded-lg text-gray-400 text-sm">انشاء حساب</button>
@@ -33,7 +41,7 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 <input id="loginPass" type="password" placeholder="كلمة السر" class="input-gold w-full p-3 rounded-xl mb-4 text-center">
 <button onclick="doLogin()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">دخول + رسالة واتساب 📱</button>
 </div>
-<div id="registerTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5">
+  <div id="registerTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5">
 <h3 class="font-bold mb-4 text-center">انشاء حساب متجر جديد</h3>
 <div class="grid grid-cols-3 gap-2 mb-3">
 <input id="regFirst" placeholder="الاسم الاول" class="input-gold p-2.5 rounded-xl text-center text-sm">
@@ -42,11 +50,7 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 </div>
 <select id="regGov" class="input-gold w-full p-3 rounded-xl mb-3 text-sm">
 <option value="">اختر المحافظة</option>
-<option>بغداد</option><option>البصرة</option><option>نينوى</option>
-<option>الانبار</option><option>بابل</option><option>كربلاء</option>
-<option>النجف</option><option>القادسية</option><option>ذي قار</option>
-  <option>ميسان</option><option>واسط</option>
-<option>ديالى</option><option>صلاح الدين</option><option>كركوك</option><option>اربيل</option><option>دهوك</option><option>السليمانية</option><option>المثنى</option>
+<option>بغداد</option><option>البصرة</option><option>نينوى</option><option>الانبار</option><option>بابل</option><option>كربلاء</option><option>النجف</option><option>القادسية</option><option>ذي قار</option><option>ميسان</option><option>واسط</option><option>ديالى</option><option>صلاح الدين</option><option>كركوك</option><option>اربيل</option><option>دهوك</option><option>السليمانية</option><option>المثنى</option>
 </select>
 <input id="regAddress" placeholder="العنوان التفصيلي" class="input-gold w-full p-3 rounded-xl mb-3 text-sm">
 <input id="regStore" placeholder="اسم المتجر" class="input-gold w-full p-3 rounded-xl mb-3">
@@ -69,6 +73,7 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 </div>
 </div>
 </div>
+<!-- Main App - FIXED with showTab('home',this) -->
 <div id="app" class="hidden min-h-screen">
 <div class="text-center pt-6 pb-2">
 <h1 class="text-3xl font-black">دفتري</h1>
@@ -81,7 +86,7 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 <button onclick="showTab('add',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs">اضافة زبون</button>
 <button onclick="showTab('help',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs">مساعدة</button>
 </div>
-<div id="home" class="tab px-4 mt-4">
+  <div id="home" class="tab px-4 mt-4">
 <div class="bg-[#111] gold-border rounded-2xl p-5 text-center">
 <h2 class="font-bold">احصائيات المتجر</h2>
 <div class="grid grid-cols-2 gap-3 mt-4">
@@ -94,7 +99,7 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 </div>
 </div>
 <div id="customers" class="tab hidden px-4 mt-4"><div id="customersList" class="space-y-3"></div></div>
-  <div id="add" class="tab hidden px-4 mt-4">
+<div id="add" class="tab hidden px-4 mt-4">
 <div class="bg-[#111] gold-border rounded-2xl p-5">
 <h3 class="font-bold text-center mb-4">اضافة زبون جديد - مع الصور</h3>
 <input id="cName" placeholder="اسم الزبون" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
@@ -133,8 +138,8 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 </div><div id="tickets" class="mt-4 space-y-2"></div>
 </div>
 </div>
-<script>
-let currentPhone=localStorage.getItem('currentPhone')||'';
+  <script>
+let currentPhone=localStorage.getItem('currentPhone')'';
 let currentUser=null;
 let idFront='',idBack='';
 function showAuth(id,btn){
@@ -149,8 +154,7 @@ function showTab(id,btn){
  document.querySelectorAll('.tab-btn').forEach(b=>{b.className='tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs';});
  if(btn) btn.className='tab-btn active bg-[#FFD700] text-black px-4 py-2 rounded-xl font-bold text-xs';
  if(id==='customers') loadCustomers();
-
-  if(id==='help') loadTickets();
+ if(id==='help') loadTickets();
 }
 function previewImg(input,type){
  const f=input.files[0]; if(!f) return;
@@ -187,20 +191,21 @@ async function verifyOtp(){
  const res=await fetch('/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone,code})});
  const r=await res.json(); if(!r.success){alert('الكود خطأ');return;}
  currentUser=r.user; localStorage.setItem('currentUser',JSON.stringify(currentUser)); localStorage.setItem('owner',currentPhone);
+
  if(currentUser.store_name) localStorage.setItem('storeName',currentUser.store_name);
  enterApp();
 }
 function enterApp(){
  document.getElementById('auth').classList.add('hidden'); document.getElementById('app').classList.remove('hidden');
  const u=currentUserJSON.parse(localStorage.getItem('currentUser')'null');
- if(u){document.getElementById('welcomeUser').innerText=(u.full_name'')+' - '+(u.store_name'')+' ('+(u.phonecurrentPhone)+')'; document.getElementById('ownerPhone').value=currentPhone; document.getElementById('ownerStoreHome').value=u.store_name''; document.getElementById('ownerStore').value=u.store_name||'';}
+ if(u){document.getElementById('welcomeUser').innerText=(u.full_name'')+' - '+(u.store_name'')+' ('+(u.phonecurrentPhone)+')'; document.getElementById('ownerPhone').value=currentPhone; document.getElementById('ownerStoreHome').value=u.store_name''; document.getElementById('ownerStore').value=u.store_name'';}
  loadCustomers();
 }
 function logout(){localStorage.removeItem('currentUser'); localStorage.removeItem('currentPhone'); document.getElementById('app').classList.add('hidden'); document.getElementById('auth').classList.remove('hidden');}
 async function doRecover(){
  const phone=document.getElementById('recPhone').value.trim(); if(!phone){alert('ادخل الرقم');return;}
-  const res=await fetch('/recover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
-const r=await res.json(); const div=document.getElementById('recResult'); div.classList.remove('hidden');
+ const res=await fetch('/recover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
+ const r=await res.json(); const div=document.getElementById('recResult'); div.classList.remove('hidden');
  if(r.demo_otp){div.innerHTML='<p class="text-[#FFD700] text-sm">كودك: '+r.demo_otp+'</p>';}
  else div.innerHTML='<p class="text-red-400 text-xs">'+(r.error'خطأ')+'</p>';
 }
@@ -220,7 +225,7 @@ async function loadCustomers(){
  document.getElementById('customersList').innerHTML=html'<p class="text-center text-gray-500 text-xs py-10">لا يوجد زبائن</p>';
  }catch(e){console.log(e)}
 }
-async function addCustomer(){
+    async function addCustomer(){
  let owner=localStorage.getItem('owner')document.getElementById('ownerPhone').value.trim()currentPhone;
  const storeName=document.getElementById('ownerStore').value.trim()localStorage.getItem('storeName')'';
  const data={owner_phone:owner,store_name:storeName,customer_name:document.getElementById('cName').value.trim(),father_name:document.getElementById('cFather').value.trim(),address:document.getElementById('cAddress').value.trim(),customer_phone:document.getElementById('cPhone').value.trim(),national_id:document.getElementById('cNational').value.trim(),item_type:document.getElementById('cItem').value.trim(),total_amount:parseInt(document.getElementById('cTotal').value)0,first_payment:parseInt(document.getElementById('cPaid').value)0,monthly_installment:parseInt(document.getElementById('cMonthly').value)0,id_front_image:idFront,id_back_image:idBack};
@@ -232,16 +237,14 @@ async function sendHelp(){
  const data={name:document.getElementById('hName').value,phone:document.getElementById('hPhone').value,subject:document.getElementById('hSubject').value,message:document.getElementById('hMessage').value,owner_phone:localStorage.getItem('owner')'عام'};
  const res=await fetch('/help/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const r=await res.json(); if(r['نجاح']) alert('تم الارسال ✅');
 }
-  async function loadTickets(){
- try{const res=await fetch('/help/tickets'); const data=await res.json(); const list=data['الرسائل']||[]; document.getElementById('tickets').innerHTML=list.slice().reverse().map(t=>'<div class="bg-[#111] border border-[#FFD700]/20 rounded-xl p-2"><div class="flex justify-between text-[11px]"><span class="font-bold">'+t.name+'</span><span class="text-gray-500">'+t.date+'</span></div><p class="text-[#FFD700] text-[11px] mt-1">'+t.subject+'</p></div>').join('');}catch(e){}
+async function loadTickets(){
+ try{const res=await fetch('/help/tickets'); const data=await res.json(); const list=data['الرسائل'][]; document.getElementById('tickets').innerHTML=list.slice().reverse().map(t=>'<div class="bg-[#111] border border-[#FFD700]/20 rounded-xl p-2"><div class="flex justify-between text-[11px]"><span class="font-bold">'+t.name+'</span><span class="text-gray-500">'+t.date+'</span></div><p class="text-[#FFD700] text-[11px] mt-1">'+t.subject+'</p></div>').join('');}catch(e){}
 }
-  window.addEventListener('load',()=>{
+window.addEventListener('load',()=>{
  const saved=localStorage.getItem('currentUser');
- if(saved){try{currentUser=JSON.parse(saved); currentPhone=localStorage.getItem('currentPhone')localStorage.getItem('owner')''; if(currentPhone) enterApp();}catch(e){}}
+ if(saved){try{currentUser=JSON.parse(saved); currentPhone=localStorage.getItem('currentPhone')localStorage.getItem('owner')||''; if(currentPhone) enterApp();}catch(e){}}
 });
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
 </script>
 </body>
 </html>
-
-
