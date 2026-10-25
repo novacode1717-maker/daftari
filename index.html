@@ -12,14 +12,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
-.gold-gradient{background:linear-gradient(135deg,#FFD700,#D4AF37)}
-.gold-border{border:2px solid #FFD700;box-shadow:0 0 20px rgba(255,215,0,0.3)}
-.gold-glow:hover{box-shadow:0 0 30px rgba(255,215,0,0.6);transform:translateY(-2px);transition:0.3s}
-.input-gold{background:#111;border:1px solid #333;color:#FFD700}
-.input-gold:focus{border-color:#FFD700;outline:none;box-shadow:0 0 10px rgba(255,215,0,0.3)}
-.auth-tab.active{background:#FFD700;color:#000;font-weight:900}
-.tab-btn.active{background:#FFD700;color:#000;font-weight:900}
+body{
+  font-family:'Tajawal',sans-serif;
+  background:#050505;
+  color:#FFD700;
+  margin: 0;
+  padding: 0;
+     }
+.gold-gradient{
+  background:linear-gradient(135deg,#FFD700,#D4AF37);
+  }
+.gold-border{
+  border:2px solid #FFD700;
+  box-shadow:0 0 20px rgba(255,215,0,0.3);
+  } 
+.gold-glow:hover{
+  box-shadow:0 0 30px rgba(255,215,0,0.6);
+  transform:translateY(-2px);
+  transition:0.3s;
+}  
+.input-gold{
+  background:#111;
+  border:1px solid #333;
+  color:#FFD700;
+  padding: 12px;
+  width: 100%;
+  marin-bottom: 12px ;
+}
+.input-gold:focus{
+  border-color:#FFD700;
+  outline:none;
+  box-shadow:0 0 10px rgba(255,215,0,0.3);
+}
+.auth-tab {
+ padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
 </style>
 </head>
 <body class="min-h-screen">
