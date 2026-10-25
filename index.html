@@ -7,14 +7,12 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/static/icon.png">
 <meta name="theme-color" content="#FFD700">
-<meta name="background-color" content="#050505">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 .gold-gradient{background:linear-gradient(135deg,#FFD700,#D4AF37)}
 .gold-border{border:2px solid #FFD700;box-shadow:0 0 20px rgba(255,215,0,0.3)}
-.gold-glow:hover{box-shadow:0 0 30px rgba(255,215,0,0.6);transform:translateY(-2px);transition:0.3s}
 .input-gold{background:#111;border:1px solid #333;color:#FFD700}
 .input-gold:focus{border-color:#FFD700;outline:none;box-shadow:0 0 10px rgba(255,215,0,0.3)}
 .auth-tab.active{background:#FFD700;color:#000;font-weight:900}
@@ -24,9 +22,8 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 <body class="min-h-screen">
 <div id="auth" class="min-h-screen p-4">
 <div class="text-center pt-8 pb-4">
-<img src="/static/icon.png" class="w-20 h-20 rounded-2xl mx-auto gold-border" onerror="this.style.display='none'">
-<h1 class="text-4xl font-black mt-4">دفتري 👑</h1>
-<p class="text-gray-500 text-sm mt-2">نظام الاقساط الفاخر - اسود وذهبي</p>
+<h1 class="text-4xl font-black">دفتري 👑</h1>
+<p class="text-gray-500 text-sm mt-2">نظام الاقساط الفاخر - 400 سطر</p>
 </div>
 <div class="flex bg-[#111] rounded-xl p-1 mt-6 max-w-md mx-auto border border-[#333]">
 <button onclick="showAuth('login',this)" class="auth-tab active bg-[#FFD700] text-black flex-1 py-2.5 rounded-lg font-bold text-sm">دخول</button>
@@ -40,215 +37,6 @@ body{font-family:'Tajawal',sans-serif;background:#050505;color:#FFD700}
 <input id="loginPass" type="password" placeholder="كلمة السر" class="input-gold w-full p-3 rounded-xl mb-4 text-center">
 <button onclick="doLogin()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">دخول + رسالة واتساب 📱</button>
 </div>
-<div id="registerTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5">
-<h3 class="font-bold mb-4 text-center">انشاء حساب متجر جديد</h3>
-<div class="grid grid-cols-3 gap-2 mb-3">
-<input id="regFirst" placeholder="الاسم الاول" class="input-gold p-2.5 rounded-xl text-center text-sm">
-<input id="regSecond" placeholder="اسم الاب" class="input-gold p-2.5 rounded-xl text-center text-sm">
-<input id="regLast" placeholder="اللقب" class="input-gold p-2.5 rounded-xl text-center text-sm">
-</div>
-<select id="regGov" class="input-gold w-full p-3 rounded-xl mb-3 text-sm">
-<option value="">اختر المحافظة</option>
-<option>بغداد</option><option>البصرة</option><option>نينوى</option><option>الانبار</option><option>بابل</option><option>كربلاء</option><option>النجف</option><option>القادسية</option><option>ذي قار</option><option>ميسان</option><option>واسط</option><option>ديالى</option><option>صلاح الدين</option><option>كركوك</option><option>اربيل</option><option>دهوك</option><option>السليمانية</option><option>المثنى</option>
-</select>
-<input id="regAddress" placeholder="العنوان التفصيلي" class="input-gold w-full p-3 rounded-xl mb-3 text-sm">
-<input id="regStore" placeholder="اسم المتجر" class="input-gold w-full p-3 rounded-xl mb-3">
-<input id="regPhone" placeholder="رقم الموبايل -
- واتساب" class="input-gold w-full p-3 rounded-xl mb-3 text-center">
-<input id="regPass" type="password" placeholder="كلمة السر" class="input-gold w-full p-3 rounded-xl mb-4 text-center">
-<button onclick="doRegister()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">انشاء حساب + كود واتساب 📱</button>
-</div>
-<div id="recoverTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5 text-center">
-<h3 class="font-bold mb-4">استرجاع الحساب</h3>
-<input id="recPhone" placeholder="رقم الموبايل" class="input-gold w-full p-3 rounded-xl mb-3 text-center">
-<button onclick="doRecover()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">استرجاع بكود واتساب</button>
-<div id="recResult" class="hidden mt-4 bg-[#050505] border border-[#FFD700]/30 rounded-xl p-3"></div>
-</div>
-<div id="otpTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5 text-center">
-<h3 class="font-bold mb-2">تأكيد واتساب</h3>
-<p id="otpInfo" class="text-gray-400 text-xs mb-4"></p>
-<input id="otpCode" placeholder="000000" class="input-gold w-full p-4 rounded-xl mb-4 text-center text-2xl tracking-[0.5em]">
-<button onclick="verifyOtp()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">تأكيد الكود ✅</button>
-<p id="otpDemo" class="text-[#FFD700] text-xs mt-3 font-bold"></p>
-</div>
-</div>
-</div>
-<div id="app" class="hidden min-h-screen">
-<div class="text-center pt-6 pb-2">
-<h1 class="text-3xl font-black">دفتري</h1>
-<p id="welcomeUser" class="text-gray-500 text-[11px] mt-1"></p>
-<button onclick="logout()" class="text-gray-500 text-[10px] underline mt-1">خروج من الحساب</button>
-</div>
-<div class="flex justify-center gap-1.5 px-3 mt-4 flex-wrap">
-<button onclick="showTab('home',this)" class="tab-btn active bg-[#FFD700] text-black px-4 py-2 rounded-xl font-bold text-xs">الرئيسية</button>
-<button onclick="showTab('customers',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs">زبائني</button>
-<button onclick="showTab('add',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs">اضافة زبون</button>
-<button onclick="showTab('help',this)" class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs">مساعدة</button>
-</div>
-<div id="home" class="tab px-4 mt-4">
-<div class="bg-[#111] gold-border rounded-2xl p-5 text-center gold-glow">
-<h2 class="font-bold">احصائيات المتجر</h2>
-<div class="grid grid-cols-2 gap-3 mt-4">
-<div class="bg-[#050505] border border-[#FFD700]/30 rounded-xl p-3"><p class="text-gray-500 text-[10px]">عدد الزبائن</p><p id="count" class="text-xl font-black">0</p></div>
-<div class="bg-[#050505] border border-[#FFD700]/30 rounded-xl p-3"><p class="text-gray-500 text-[10px]">المتبقي الكلي</p><p id="total" class="text-sm font-black">0 د.ع</p></div>
-</div>
-<input id="ownerPhone" placeholder="رقم صاحب المتجر" class="input-gold w-full mt-4 p-3 rounded-xl text-center text-sm">
-<input id="ownerStoreHome" placeholder="اسم المتجر" class="input-gold w-full mt-2 p-3 rounded-xl text-center text-sm">
-<button onclick="saveOwnerAndLoad()" class="gold-gradient text-black w-full mt-3 p-3 rounded-xl font-bold text-sm">حفظ وتحميل البيانات</button>
-</div>
-</div>
-<div id="customers" class="tab hidden px-4 mt-4"><div id="customersList" class="space-y-3"></div></div>
-<div id="add" class="tab hidden px-4 mt-4">
-<div class="bg-[#111] gold-border rounded-2xl p-5">
-<h3 class="font-bold text-center mb-4">اضافة زبون جديد</h3>
-<input id="cName" placeholder="اسم الزبون" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="cFather" placeholder="اسم اب الزبون" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<div class="grid grid-cols-2 gap-2 mb-2">
-<div class="border border-dashed border-[#333] rounded-xl p-2 text-center relative h-20">
-<input type="file" id="cIdFront" accept="image/*" onchange="previewImg(this,'front')" class="absolute inset-0 opacity-0 w-full h-full">
-<div id="frontText" class="text-gray-500 text-[10px] mt-3">📸 هوية وجه<br>(اختياري - تخطي)</div><img id="frontImg" class="hidden w-full h-full object-cover rounded">
-</div>
-<div class="border border-dashed border-[#333] rounded-xl p-2 text-center relative h-20">
-<input type="file" id="cIdBack" accept="image/*" onchange="previewImg(this,'back')" class="absolute inset-0 opacity-0 w-full h-full">
-<div id="backText" class="text-gray-500 text-[10px] mt-3">📸 هوية قفا<br>(اختياري - تخطي)</div><img id="backImg" class="hidden w-full h-full object-cover rounded">
-</div>
-</div>
-<input id="cAddress" placeholder="السكن - المحافظة - المنطقة" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="cPhone" placeholder="رقم الزبون" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="cNational" placeholder="رقم البطاقة الوطنية" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="ownerStore" placeholder="اسم المتجر" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="cItem" placeholder="نوع المادة - مثال:
- ثلاجة" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<div class="grid grid-cols-3 gap-2 mb-4">
-<input id="cTotal" type="number" placeholder="المبلغ الكلي" class="input-gold p-2 rounded-xl text-center text-xs">
-<input id="cPaid" type="number" placeholder="الدفعة الاولى" class="input-gold p-2 rounded-xl text-center text-xs">
-<input id="cMonthly" type="number" placeholder="القسط الشهري يدوي" class="input-gold p-2 rounded-xl text-center text-xs border-[#FFD700]">
-</div>
-<button onclick="addCustomer()" class="gold-gradient text-black w-full p-4 rounded-xl font-bold">اضافة الزبون ✅</button>
-</div>
-</div>
-<div id="help" class="tab hidden px-4 mt-4">
-<div class="bg-[#111] gold-border rounded-2xl p-4">
-<h3 class="font-bold text-center mb-3 text-sm">مركز المساعدة</h3>
-<input id="hName" placeholder="اسمك" class="input-gold w-full p-2 rounded-xl mb-2 text-xs">
-<input id="hPhone" placeholder="رقمك" class="input-gold w-full p-2 rounded-xl mb-2 text-xs">
-<input id="hSubject" placeholder="الموضوع" class="input-gold w-full p-2 rounded-xl mb-2 text-xs">
-<textarea id="hMessage" placeholder="رسالتك" class="input-gold w-full p-2 rounded-xl mb-2 h-20 text-xs"></textarea>
-<button onclick="sendHelp()" class="gold-gradient text-black w-full p-2 rounded-xl font-bold text-xs">ارسال</button>
-</div><div id="tickets" class="mt-4 space-y-2"></div>
-</div>
-</div>
- <script>
-let currentPhone=localStorage.getItem('currentPhone')'';
-let currentUser=null;
-let idFront='',idBack='';
-function showAuth(id,btn){
- document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden'));
- document.getElementById(id+'Tab').classList.remove('hidden');
- document.querySelectorAll('.auth-tab').forEach(b=>{b.className='auth-tab flex-1 py-2.5 rounded-lg text-gray-400 text-sm';});
- if(btn) btn.className='auth-tab active bg-[#FFD700] text-black flex-1 py-2.5 rounded-lg font-bold text-sm';
-}
-function showTab(id,btn){
- document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden'));
- document.getElementById(id).classList.remove('hidden');
- document.querySelectorAll('.tab-btn').forEach(b=>{b.className='tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl text-xs';});
- if(btn) btn.className='tab-btn active bg-[#FFD700] text-black px-4 py-2 rounded-xl font-bold text-xs';
- if(id==='customers') loadCustomers();
- if(id==='help') loadTickets();
-}
-function previewImg(input,type){
- const f=input.files[0]; if(!f) return;
- const r=new FileReader();
- r.onload=e=>{
-  if(type==='front'){idFront=e.target.result;document.getElementById('frontImg').src=idFront;document.getElementById('frontImg').classList.remove('hidden');document.getElementById('frontText').classList.add('hidden');}
-  else{idBack=e.target.result;document.getElementById('backImg').src=idBack;document.getElementById('backImg').classList.remove('hidden');document.getElementById('backText').classList.add('hidden');}
- };
- r.readAsDataURL(f);
-}
-async function doRegister(){
- const data={first_name:document.getElementById('regFirst').value.trim(),second_name:document.getElementById('regSecond').value.trim(),last_name:document.getElementById('regLast').value.trim(),governorate:document.getElementById('regGov').value,address:document.getElementById('regAddress').value.trim(),store_name:document.getElementById('regStore').value.trim(),phone:document.getElementById('regPhone').value.trim(),password:document.getElementById('regPass').value.trim()};
- if(!data.first_name!data.phone!data.password!data.store_name){alert('اكمل الحقول المطلوبة: الاسم + المتجر + الموبايل + الباسورد');return;}
- const res=await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
- const r=await res.json(); if(r.error){alert(r.error);return;}
- currentPhone=data.phone; localStorage.setItem('currentPhone',currentPhone);
- document.getElementById('otpInfo').innerText='تم ارسال كود واتساب للرقم '+data.phone;
- document.getElementById('otpDemo').innerText='كود تجريبي: '+(r.demo_otp'');
- document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden')); document.getElementById('otpTab').classList.remove('hidden');
-}
-async function doLogin(){
- const data={phone:document.getElementById('loginPhone').value.trim(),password:document.getElementById('loginPass').value.trim()};
- if(!data.phone!data.password){alert('ادخل الرقم وكلمة السر');return;}
- const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
- const r=await res.json(); if(r.error){alert(r.error);return;}
- currentPhone=data.phone; localStorage.setItem('currentPhone',currentPhone);
- document.getElementById('otpInfo').innerText='تم ارسال رسالة واتساب للرقم '+data.phone+' بيها كود';
- document.getElementById('otpDemo').innerText='كود تجريبي: '+(r.demo_otp'');
- document.querySelectorAll('.auth-content').forEach(t=>t.classList.add('hidden')); document.getElementById('otpTab').classList.remove('hidden');
-}
-async function verifyOtp(){
- const code=document.getElementById('otpCode').value.trim();
- if(!code){alert('ادخل الكود');return;}
- const res=await fetch('/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone,code})});
- const r=await res.json(); if(!r.success){alert('الكود خطأ');return;}
- currentUser=r.user; localStorage.setItem('currentUser',JSON.stringify(currentUser)); localStorage.setItem('owner',currentPhone);
- 
- if(currentUser.store_name) localStorage.setItem('storeName',currentUser.store_name);
- enterApp();
-}
-function enterApp(){
- document.getElementById('auth').classList.add('hidden'); document.getElementById('app').classList.remove('hidden');
- const u=currentUserJSON.parse(localStorage.getItem('currentUser')'null');
- if(u){document.getElementById('welcomeUser').innerText=(u.full_name'')+' - '+(u.store_name'')+' | '+(u.governorate'')+' ('+(u.phonecurrentPhone)+')'; document.getElementById('ownerPhone').value=currentPhone; document.getElementById('ownerStoreHome').value=u.store_name''; document.getElementById('ownerStore').value=u.store_name||'';}
- loadCustomers();
-}
-  function logout(){localStorage.removeItem('currentUser'); localStorage.removeItem('currentPhone'); document.getElementById('app').classList.add('hidden'); document.getElementById('auth').classList.remove('hidden');}
-async function doRecover(){
- const phone=document.getElementById('recPhone').value.trim(); if(!phone){alert('ادخل الرقم');return;}
- const res=await fetch('/recover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
- const r=await res.json(); const div=document.getElementById('recResult'); div.classList.remove('hidden');
- if(r.demo_otp){div.innerHTML='<p class="text-[#FFD700] text-sm">كودك: '+r.demo_otp+'</p><button onclick="currentPhone=\''+phone+'\';localStorage.setItem(\'currentPhone\',\''+phone+'\');document.getElementById(\'otpInfo\').innerText=\'كود واتساب للرقم '+phone+'\';document.getElementById(\'otpDemo\').innerText=\'كود: '+r.demo_otp+'\';document.querySelectorAll(\'.auth-content\').forEach(t=>t.classList.add(\'hidden\'));document.getElementById(\'otpTab\').classList.remove(\'hidden\');" class="bg-[#FFD700] text-black px-4 py-1.5 rounded-full text-xs mt-2 font-bold">ادخل الكود</button>';}
- else div.innerHTML='<p class="text-red-400 text-xs">'+(r.error'خطأ')+'</p>';
-}
-function saveOwnerAndLoad(){
- const s=document.getElementById('ownerStoreHome').value.trim(); const p=document.getElementById('ownerPhone').value.trim();
- if(s) localStorage.setItem('storeName',s); if(p) localStorage.setItem('owner',p); loadCustomers();
-}
-async function loadCustomers(){
- let owner=document.getElementById('ownerPhone').value.trim()localStorage.getItem('owner')currentPhone; if(!owner) return;
- localStorage.setItem('owner',owner);
- try{
- const res=await fetch('/store/'+owner+'/customers'); const data=await res.json();
- document.getElementById('count').innerText=data['عدد_الزبائن']0;
- const list=data['الزبائن'][]; let total=0; list.forEach(c=>total+=(c['المتبقي']0));
- document.getElementById('total').innerText=total.toLocaleString()+' د.ع';
- const html=list.map(c=>'<div class="bg-[#111] border border-[#FFD700]/30 rounded-2xl p-3"><div class="flex justify-between items-center"><span class="font-bold text-xs">'+(c['اسم_الزبون']'')+' بن '+(c['اسم_الاب']'')+'</span><span class="bg-[#FFD700] text-black px-2 py-1 rounded-full text-[10px] font-bold">'+(c['المتبقي']0)+' د.ع</span></div><p class="text-gray-500 text-[10px] mt-1">'+(c['السكن']'')+' | '+(c['رقم_الزبون']'')+' | '+(c['نوع_المادة']'')+'</p><div class="flex gap-1 mt-2 text-[9px] flex-wrap"><span class="bg-[#050505] border border-[#333] px-2 py-1 rounded-full">الكلي:'+(c['المبلغ_الكلي']0)+'</span><span class="bg-[#050505] border border-[#333] px-2 py-1 rounded-full">مدفوع:'+(c['المدفوع']0)+'</span><span class="bg-[#050505] border border-[#FFD700]/40 px-2 py-1 rounded-full text-[#FFD700]">قسط:'+(c['القسط_الشهري']0)+'</span></div></div>').join('');
- document.getElementById('customersList').innerHTML=html'<p class="text-center text-gray-500 text-xs py-10">لا يوجد زبائن - اضف زبون جديد</p>';
- }catch(e){alert('خطأ: '+e)}
-}
-async function addCustomer(){
- let owner=localStorage.getItem('owner')document.getElementById('ownerPhone').value.trim()currentPhone;
- const storeName=document.getElementById('ownerStore').value.trim()localStorage.getItem('storeName')'';
- const data={owner_phone:owner,store_name:storeName,customer_name:document.getElementById('cName').value.trim(),father_name:document.getElementById('cFather').value.trim(),address:document.getElementById('cAddress').value.trim(),customer_phone:document.getElementById('cPhone').value.trim(),national_id:document.getElementById('cNational').value.trim(),item_type:document.getElementById('cItem').value.trim(),total_amount:parseInt(document.getElementById('cTotal').value)0,first_payment:parseInt(document.getElementById('cPaid').value)0,monthly_installment:parseInt(document.getElementById('cMonthly').value)0,id_front_image:idFront,id_back_image:idBack};
- if(!data.customer_name){alert('ادخل اسم الزبون');return;}
- 
- const res=await fetch('/store/add-customer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
- const r=await res.json(); if(r['نجاح']){alert('تم اضافة الزبون ✅'); showTab('customers',document.querySelectorAll('.tab-btn')[1]); loadCustomers(); idFront=''; idBack=''; document.getElementById('frontImg').classList.add('hidden'); document.getElementById('backImg').classList.add('hidden'); document.getElementById('frontText').classList.remove('hidden'); document.getElementById('backText').classList.remove('hidden');}
-}
-async function sendHelp(){
- const data={name:document.getElementById('hName').value,phone:document.getElementById('hPhone').value,subject:document.getElementById('hSubject').value,message:document.getElementById('hMessage').value,owner_phone:localStorage.getItem('owner')'عام'};
- const res=await fetch('/help/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const r=await res.json(); if(r['نجاح']) alert('تم الارسال ✅');
-}
-async function loadTickets(){
- try{const res=await fetch('/help/tickets'); const data=await res.json(); const list=data['الرسائل'][]; document.getElementById('tickets').innerHTML=list.slice().reverse().map(t=>'<div class="bg-[#111] border border-[#FFD700]/20 rounded-xl p-2"><div class="flex justify-between text-[11px]"><span class="font-bold">'+t.name+'</span><span class="text-gray-500">'+t.date+'</span></div><p class="text-[#FFD700] text-[11px] mt-1">'+t.subject+'</p></div>').join('');}catch(e){}
-}
-window.addEventListener('load',()=>{
- const saved=localStorage.getItem('currentUser');
- if(saved){try{currentUser=JSON.parse(saved); currentPhone=localStorage.getItem('currentPhone')localStorage.getItem('owner')||''; if(currentPhone) enterApp();}catch(e){}}
-});
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
-</script>
-</body>
-</html>
 
 
 
