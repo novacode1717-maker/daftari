@@ -668,7 +668,54 @@ def download_backup(password: str = "", file: str = ""):
         return {"error": "لا توجد نسخ"}
     latest = sorted(all_files, key=lambda x: os.path.getmtime(x), reverse=True)[0]
     return FileResponse(latest, filename=os.path.basename(latest))
-
+@app.post("/admin/edit-store-phone")
+def edit_store_phone(data: dict):
+    password = data.get("password","")
+    old_phone = data.get("old_phone","").strip()
+    new_phone = data.get("new_phone","").strip()
+    
+    if password != ADMIN_PASSWORD:
+        return {"error": "كلمة سر الادمن خطأ"}
+    
+    if old_phone not in users_db:
+        return {"error": "الرقم القديم ما موجود"}
+    
+    if new_phone in users_db:
+        return {"error": "الرقم الجديد موجود مسبقاً - اختار رقم ثاني"}
+    
+    if not new_phone or len(new_phone) < 10:
+        return {"error": "الرقم الجديد خطأ"}
+    
+    # 1. نقل بيانات المتجر
+    users_db[new_phone] = users_db[old_phone]
+    users_db[new_phone]["phone"] = new_phone
+    del users_db[old_phone]
+    
+    # 2. نقل ملف الزبائن
+    old_file = f"data/customers_{old_phone}.json"
+    new_file = f"data/customers_{new_phone}.json"
+    if os.path.exists(old_file):
+        try:
+            os.rename(old_file, new_file)
+        except:
+            try:
+                with open(old_file,"r",encoding="utf-8") as f:
+                    customers=json.load(f)
+                with open(new_file,"w",encoding="utf-8") as nf:
+                    json.dump(customers,nf,ensure_ascii=False,indent=2)
+                os.remove(old_file)
+            except:
+                pass
+    
+    # 3. نقل من الكاش
+    if old_phone in store_cache:
+        store_cache[new_phone]=store_cache[old_phone]
+        del store_cache[old_phone]
+    
+    # 4. حفظ كلشي
+    save_users()
+    
+    return {"نجاح": True, "message": f"تم تغيير الرقم من {old_phone} الى {new_phone} ✅", "new_phone": new_phone}
 
 if __name__== "__main__":   
     port = int(os.environ.get("PORT", 8000))
