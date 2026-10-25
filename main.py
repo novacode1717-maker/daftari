@@ -633,6 +633,43 @@ def download_backup(password: str = "", file: str = ""):
     def health_check():
      return {"status": "ok", "app": "دفتري", "version": "2.0.0", "systems": ["Android", "iPhone", "Mac", "Windows", "Linux"]}
 
+     # ===== Admin Backups - النسخ الاحتياطي =====
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+@app.get("/admin/backups/list")
+def list_backups(password: str = ""):
+    if password != ADMIN_PASSWORD:
+        return {"error": "باسورد خطأ"}
+    backups = []
+    for root, dirs, files in os.walk("data/backups"):
+        for file in files:
+            path = os.path.join(root, file)
+            try:
+                size = os.path.getsize(path)
+            except:
+                size = 0
+            backups.append({"الملف": path, "الحجم": size})
+    backups = sorted(backups, key=lambda x: x["الملف"], reverse=True)
+    if not backups:
+        return {"رسالة": "لا توجد نسخ احتياطية بعد", "النسخ": []}
+    return {"عدد_النسخ": len(backups), "النسخ": backups}
+
+@app.get("/admin/backup/download")
+def download_backup(password: str = "", file: str = ""):
+    if password != ADMIN_PASSWORD:
+        return {"error": "باسورد خطأ"}
+    if file and os.path.exists(file):
+        return FileResponse(file, filename=os.path.basename(file))
+    all_files = []
+    for root, dirs, files in os.walk("data/backups"):
+        for f in files:
+            all_files.append(os.path.join(root, f))
+    if not all_files:
+        return {"error": "لا توجد نسخ"}
+    latest = sorted(all_files, key=lambda x: os.path.getmtime(x), reverse=True)[0]
+    return FileResponse(latest, filename=os.path.basename(latest))
+
+
 if __name__== "__main__":   
     port = int(os.environ.get("PORT", 8000))
     url = f"http://localhost:{port}"
