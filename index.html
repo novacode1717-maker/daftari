@@ -341,17 +341,13 @@ function showAuth(t,e){
  if(e) e.classList.add('active');
 }
 function showTab(t,e){
-document.querySelectorAll('.tab-btn').forEach(x=>{
-x.classList.remove('active','bg-[#FFD700]','text-black');
-x.classList.add('bg-[#111]','border','border-[#FFD700]','text-gray-400');
-});
-e.classList.add('active','bg-[#FFD700]','text-black');
-e.classList.remove('bg-[#111]','border','border-[#FFD700]','text-gray-400');
-document.querySelectorAll('.tab-content').forEach(x=>x.classList.add('hidden'));
-document.getElementById(t+'Tab').classList.remove('hidden');
-if(t==='customers')loadCustomers();
-if(t==='help')loadTickets();
-}
+ document.querySelectorAll('.tab-content').forEach(a=>a.classList.add('hidden'));
+ document.getElementById(t+'Tab').classList.remove('hidden');
+ document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+ if(e) e.classList.add('active');
+ if(t==='customers') loadCustomers();
+ if(t==='help') loadTickets();
+}  
 function previewImg(input,id){
 const file=input.files[0];
 if(file){
