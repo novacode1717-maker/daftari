@@ -379,8 +379,7 @@ const res=await fetch('/store/all/customers');
 
 const data=await res.json();
 const list=data.customers || [];
-document.getElementById('customersList').innerHTML=list.map(c=><div class="bg-[#111] p-2 rounded-xl"><p>${c.name}</p></div>).join('');
-}
+document.getElementById('customersList').innerHTML=list.map(function(c){return '<div class="bg-[#111] p-2 rounded-xl"><p>'+c.name+' - '+c.phone+'</p></div>'}).join('');
 async function sendHelp(){
 const msg=document.getElementById('helpMsg').value;
 const res=await fetch('/help/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
@@ -391,7 +390,7 @@ async function loadTickets(){
 const res=await fetch('/help/tickets');
 const data=await res.json();
 const list=data.tickets||[];
-document.getElementById('ticketsList').innerHTML=list.map(t=><div class="bg-black p-2 rounded"><p>${t.message}</p></div>).join('');
+document.getElementById('ticketsList').innerHTML=list.map(function(t){return '<div class="bg-black p-2 rounded"><p>'+t.message+'</p></div>'}).join('');
 }
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/static/sw.js');}
 </script>
