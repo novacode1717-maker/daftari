@@ -1,0 +1,8 @@
+name = "daftari-as"
+main = "functions/api.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daftari_db"
+database_id = "روح انسخه من صفحة daftari_db"
