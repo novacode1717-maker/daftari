@@ -299,7 +299,7 @@
             };
 
             let accounts = JSON.parse(
-                localStorage.getItem("daftariAccounts")  "[]"
+                localStorage.getItem("daftariAccounts")  || "[]"
             );
 
             const existing = accounts.find(function(item) {
@@ -346,7 +346,7 @@
             ).value;
 
             const accounts = JSON.parse(
-                localStorage.getItem("daftariAccounts")  "[]"
+                localStorage.getItem("daftariAccounts") || "[]"
             );
 
             const account = accounts.find(function(item) {
