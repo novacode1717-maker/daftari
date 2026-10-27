@@ -1,426 +1,394 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دفتري - نظام الاقساط</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/static/icon.png">
-<link rel="apple-touch-icon" href="/static/icon-192x192.png">
-<meta name="theme-color" content="#FFD700">
-<meta name="background-color" content="#050505">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-<style>/* بدون CDN - CSS محلي */</style>
-<style>
-body{
-  font-family:'Tajawal',sans-serif;
-  background:#050505;
-  color:#FFD700;
-  margin: 0;
-  padding: 0;
-     }
-.gold-gradient{
-  background:linear-gradient(135deg,#FFD700,#D4AF37);
-  }
-.gold-border{
-  border:2px solid #FFD700;
-  box-shadow:0 0 20px rgba(255,215,0,0.3);
-  } 
-.gold-glow:hover{
-  box-shadow:0 0 30px rgba(255,215,0,0.6);
-  transform:translateY(-2px);
-  transition:0.3s;
-}  
-.input-gold{
-  background:#111;
-  border:1px solid #333;
-  color:#FFD700;
-  padding: 12px;
-  width: 100%;
-  marin-bottom: 12px;
-}
-.input-gold:focus{
-  border-color:#FFD700;
-  outline:none;
-  box-shadow:0 0 10px rgba(255,215,0,0.3);
-}
-.auth-tab {
- padding: 10px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-.auth-tab.active {
-background: #FFD700;
-color: #000;
-font-weight: 900;
-}
-.tab-btn {
-padding: 8px 20px;
-border-radius: 12px;
-curson: pointer;
-}
-.tab-btn.active {
-background: #FFD700;
-color: #000;
-font-weight: 900;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دفتري - نظام الأقساط</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5f9;
+            color: #222;
+        }
+
+        header {
+            background: #173b68;
+            color: white;
+            padding: 25px 15px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 0;
+            color: #dce8f7;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 600px;
+            margin: 35px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px #0000000d;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #173b68;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #173b68;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #24558f;
+        }
+
+        .secondary {
+            background: #e8edf5;
+            color: #173b68;
+        }
+
+        .secondary:hover {
+            background: #d9e2ef;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            margin-top: 12px;
+            border: 1px solid #d4d9e2;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #edf5ff;
+            color: #173b68;
+            line-height: 1.8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+    </style>
 </head>
-<body class="min-h-screen">
-<!-- Auth Screen - FIXED with showAuth('login',this) -->
-<div id="auth" class="min-h-screen p-4">
-<div class="text-center pt-8 pb-4">
-<h1 class="text-4xl font-black">دفتري 👑</h1>
-<p class="text-gray-500 text-sm mt-2">نظام الاقساط الفاخر - 400 سطر كامل</p>
-</div>
-<div class="flex bg-[#111] rounded-xl p-1 mt-6 max-w-md mx-auto border border-[#333]">
-<button onclick="showAuth('login',this)" 
-class="auth-tab active bg-[#FFD700] text-black flex-1 py-2.5 rounded-lg font-bold">
-Login
-</button>
-<button onclick="showAuth('register',this)" 
-class="auth-tab flex-1 py-2.5 rounded-lg text-gray-400">
-Register
-</button>
-<button onclick="showAuth('recover',this)" 
-class="auth-tab flex-1 py-2.5 rounded-lg text-gray-400">
-Recover
-</button>
-</div>
-<div class="max-w-md mx-auto mt-6">
-<div id="loginAuth" class="auth-content bg-[#111] gold-border rounded-2xl p-5">
-<h3 class="font-bold mb-4 text-center">تسجيل الدخول</h3>
-<input id="loginPhone" placeholder="رقم الموبايل" class="input-gold w-full p-3 rounded-xl mb-3 text-center">
-<input id="loginPass" type="password" placeholder="كلمة السر" class="input-gold w-full p-3 rounded-xl mb-4 text-center">
-<button onclick="doLogin()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">دخول + رسالة واتساب 📱</button>
-</div>
- <div id="registerAuth" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5">
-<h3 class="font-bold mb-4 text-center">
-Register Store
-</h3>
-<div class="grid grid-cols-2 gap-2 mb-3">
-<input id="regFirst" placeholder="First Name"
-class="input-gold p-2.5 rounded-xl text-center text-sm">
-<input id="regSecond" placeholder="Father Name"
-class="input-gold p-2.5 rounded-xl text-center text-sm">
-<input id="regLast" placeholder="Last Name"
-class="input-gold p-2.5 rounded-xl text-center text-sm">
-<select id="regGov"
-class="input-gold w-full p-2 rounded-xl text-sm">
-<option value="">Gov</option>
-</select>
-</div>
-<input id="regAddress" placeholder="Address"
-class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="regStore" placeholder="Store Name"
-class="input-gold w-full p-3 rounded-xl mb-2">
-<input id="regPhone" placeholder="Phone"
-class="input-gold w-full p-3 rounded-xl mb-2 text-center">
-<input id="regPass" type="password" placeholder="Password"
-class="input-gold w-full p-3 rounded-xl mb-4 text-center">
-<button onclick="doRegister()"
-class="gold-gradient text-black w-full p-3 rounded-xl font-bold">
-Create Account
-</button>
-</div>
-</div>
-<div id="recoverAuth" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5">
-<h3 class="font-bold mb-4 text-center">
-Recover Account
-</h3>
-<input id="recPhone" placeholder="Phone"
-class="input-gold w-full p-3 rounded-xl mb-3 text-center">
-<button onclick="doRecover()"
-class="gold-gradient text-black w-full p-3 rounded-xl font-bold">
-Send Code
-</button>
-<div id="recResult"
-class="hidden mt-4 bg-[#000000] border border-[#FFD700]/30 rounded-xl p-3">
-</div>
-</div>
 
-<div id="otpTab" class="auth-content hidden bg-[#111] gold-border rounded-2xl p-5 text-center">
-<h3 class="font-bold mb-2">
-Enter OTP
-</h3>
-<p id="otpInfo" class="text-gray-400 text-xs mb-4">
-</p>
-<input id="otpCode" placeholder="000000"
-class="input-gold w-full p-4 rounded-xl mb-4 text-center text-2xl tracking-[0.5em]">
-<button onclick="verifyOtp()"
-class="gold-gradient text-black w-full p-3 rounded-xl font-bold">
-Verify Code
-</button>
-<p id="otpDemo" class="text-[#FFD700] text-xs mt-3 font-bold">
-</p>
-</div>
+<body>
 
-</div>
-</div>
-</div>
+    <header>
+        <h1>دفتري</h1>
+        <p>نظام إدارة المحلات والأقساط إلكترونياً</p>
+    </header>
 
-<!-- End Auth Section -->
+    <main class="container">
 
-</div>
-</div>
+        <section class="card" id="home">
+            <h2>أهلاً وسهلاً بك</h2>
+            <p>إدارة حسابات زبائنك وأقساطهم بسهولة من مكان واحد.</p>
 
-</div>
+            <button onclick="showSection('register')">
+                إنشاء حساب متجر
+            </button>
 
-<!-- ==================== -->
-<!-- MAIN APP STARTS HERE -->
-<!-- FIXED with this param -->
-<!-- ==================== -->
+            <button class="secondary"
+                    onclick="showSection('login')">
+                تسجيل الدخول
+            </button>
 
-<div id="app" class="hidden min-h-screen bg-black">
+            <button class="secondary"
+                    onclick="showSection('help')">
+                مركز المساعدة
+            </button>
+        </section>
 
-<div class="text-center pt-6 pb-2">
-<h1 class="text-3xl font-black text-[#FFD700]">
-Daftari
-</h1>
-<p id="welcomeUser" class="text-gray-500 text-[11px] mt-1">
-</p>
-<button onclick="logout()"
-class="text-gray-500 text-[10px] underline mt-1">
-Logout
-</button>
-</div>
+        <section class="card hidden" id="register">
+            <h2>إنشاء حساب متجر</h2>
 
-<div class="flex justify-center gap-1.5 px-4 mt-3">
-<button onclick="showTab('home',this)"
-class="tab-btn active bg-[#FFD700] text-black px-4 py-2 rounded-xl font-bold text-xs">
-Home
-</button>
-<button onclick="showTab('customers',this)"
-class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl font-bold text-xs">
-Customers
-</button>
-<button onclick="showTab('add',this)"
-class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl font-bold text-xs">
-Add
-</button>
-<button onclick="showTab('help',this)"
-class="tab-btn bg-[#111] border border-[#FFD700] px-4 py-2 rounded-xl font-bold text-xs">
-Help
-</button>
-</div>
+            <form id="registerForm">
+                <input id="ownerName"
+                       type="text"
+                       placeholder="اسم صاحب المتجر"
+                       required>
 
-<div class="max-w-md mx-auto p-4">
+                <input id="fatherName"
+                       type="text"
+                       placeholder="اسم الأب"
+                       required>
 
-<!-- HOME TAB -->
-<div id="homeTab" class="tab-content">
-<div class="grid grid-cols-3 gap-2 mb-4">
-<div class="bg-[#111] gold-border rounded-xl p-3 text-center">
-<p class="text-[10px] text-gray-500">Total</p>
-<p id="statTotal" class="text-lg font-bold">0</p>
-</div>
-<div class="bg-[#111] gold-border rounded-xl p-3 text-center">
-<p class="text-[10px] text-gray-500">Paid</p>
-<p id="statPaid" class="text-lg font-bold text-green-500">0</p>
-</div>
-<div class="bg-[#111] gold-border rounded-xl p-3 text-center">
-<p class="text-[10px] text-gray-500">Debt</p>
-<p id="statDebt" class="text-lg font-bold text-red-500">0</p>
-</div>
-</div>
-<div id="recentList" class="space-y-2">
-<p class="text-center text-gray-600 text-sm mt-10">
-No customers yet
-</p>
-</div>
-</div>
-<!-- CUSTOMERS TAB -->
-<div id="customersTab" class="tab-content hidden">
-<input id="searchInput" placeholder="Search name or phone"
-class="input-gold w-full p-3 rounded-xl mb-3 text-sm"
-oninput="loadCustomers()">
-<div id="customersList" class="space-y-2">
-</div>
-</div>
+                <input id="shopName"
+                       type="text"
+                       placeholder="اسم المحل أو الشركة"
+                       required>
 
-<!-- ADD TAB -->
-<div id="addTab" class="tab-content hidden">
-<div class="bg-[#111] gold-border rounded-2xl p-4">
-<h3 class="font-bold text-center mb-4">Add New Customer</h3>
-<input id="custName" placeholder="Customer Name"
-class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="fatherName" placeholder="Father Name"
-class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<div class="grid grid-cols-2 gap-2 mb-2">
-<div>
-<p class="text-[10px] text-gray-500 mb-1">ID Front</p>
-<input type="file" id="idFront" accept="image/*" class="w-full text-[10px] text-gray-400" onchange="previewImg(this,'frontPrev')">
-<img id="frontPrev" class="hidden w-full h-20 object-cover rounded-lg mt-1">
-</div>
-<div>
-<p class="text-[10px] text-gray-500 mb-1">ID Back</p>
-<input type="file" id="idBack" accept="image/*" class="w-full text-[10px] text-gray-400" onchange="previewImg(this,'backPrev')">
-<img id="backPrev" class="hidden w-full h-20 object-cover rounded-lg mt-1">
-</div>
-</div>
-<select id="governorate" class="input-gold w-full p-3 rounded-xl mb-2 text-sm bg-[#111]">
-<option value="">Select Governorate</option>
-<option>Baghdad</option>
-<option>Diwaniyah</option>
-<option>Basra</option>
-<option>Najaf</option>
-<option>Karbala</option>
-<option>Hilla</option>
-<option>Kut</option>
-<option>Amarah</option>
-<option>Nasiriyah</option>
-<option>Samawah</option>
-</select>
-<input id="nationalId" placeholder="National ID Number" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="storeName" placeholder="Store Name" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<select id="itemType" class="input-gold w-full p-3 rounded-xl mb-2 text-sm bg-[#111]">
-<option value="">Item Type</option>
-<option>Gold</option>
-<option>Mobile</option>
-<option>Furniture</option>
-<option>Electrical</option>
-<option>Other</option>
-</select>
-<input id="totalAmount" type="number" placeholder="Total Amount IQD" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="paidAmount" type="number" placeholder="Paid Amount IQD" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="monthlyAmount" type="number" placeholder="Monthly Installment Manual" class="input-gold w-full p-3 rounded-xl mb-2 text-sm border-2 border-[#FFD700]">
-<input id="custPhone" placeholder="Phone Number" class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
-<input id="custAddress" placeholder="Full Address" class="input-gold w-full p-3 rounded-xl mb-3 text-sm">
-<button onclick="addCustomer()" class="gold-gradient text-black w-full p-3 rounded-xl font-bold">Save Customer</button>
-<p id="addResult" class="text-center text-xs mt-2 text-[#FFD700] font-bold"></p>
-</div>
-</div>
-<div id="helpTab" class="tab-content hidden">
-<div class="bg-[#111] gold-border rounded-2xl p-4">
-<h3 class="font-bold text-center mb-3">Support</h3>
-<textarea id="helpMsg" placeholder="Write your problem" class="input-gold w-full p-3 rounded-xl mb-3 text-sm h-20"></textarea>
-<button onclick="sendHelp()" class="gold-gradient text-black w-full p-2 rounded-xl font-bold text-xs">Send Ticket</button>
-<p id="helpResult" class="text-center text-xs mt-2 text-green-500"></p>
-<div id="ticketsList" class="mt-4 space-y-2"></div>
-</div>
-<div id="addModal" class="screen" style="position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:100;overflow:auto;display:none">
-<div class="card" style="margin:20px auto;max-width:520px">
-<h2>إضافة زبون جديد ➕</h2>
+                <input id="shopAddress"
+                       type="text"
+                       placeholder="عنوان المتجر"
+                       required>
 
-<input id="cName" class="inp" placeholder="اسم الزبون *">
-<input id="cFather" class="inp" placeholder="اسم الأب *">
-<input id="cAddr" class="inp" placeholder="عنوان عام">
+                <input id="phone"
+                       type="tel"
+                       placeholder="رقم الهاتف"
+                       required>
 
-<div style="background:#0a0a0a;border:1px solid #333;border-radius:12px;padding:12px;margin:10px 0">
-<p style="color:#FFD700;font-weight:700;margin-bottom:8px">📷 صور الجنسية (اختياري - يكدر يتخطى)</p>
+                <input id="password"
+                       type="password"
+                       placeholder="كلمة المرور"
+                       required>
+                       <button type="submit">
+                    إنشاء الحساب
+                </button>
+            </form>
 
-<label style="display:block;color:#888;font-size:13px;margin:6px 0">الوجه الأمامي للجنسية:</label>
-<input id="cIdFront" type="file" accept="image/*" class="inp" onchange="previewImg(this,'frontPrev')">
-<img id="frontPrev" style="width:100%;max-height:150px;border-radius:10px;display:none;margin-top:6px;object-fit:cover;border:1px solid #FFD700">
+            <div id="registerMessage"></div>
 
-<label style="display:block;color:#888;font-size:13px;margin:10px 0 6px">القفا الخلفي للجنسية:</label>
-<input id="cIdBack" type="file" accept="image/*" class="inp" onchange="previewImg(this,'backPrev')">
-<img id="backPrev" style="width:100%;max-height:150px;border-radius:10px;display:none;margin-top:6px;object-fit:cover;border:1px solid #FFD700">
+            <button class="secondary"
+                    onclick="showSection('home')">
+                رجوع
+            </button>
+        </section>
 
-<button class="btn-outline" style="margin-top:10px;font-size:12px;padding:8px" onclick="skipImages()">⏭️ تخطي الصور - مو ضروري</button>
-</div>
+        <section class="card hidden" id="login">
+            <h2>تسجيل الدخول</h2>
 
-<input id="cResidence" class="inp" placeholder="عنوان السكن التفصيلي *" style="border-color:#FFD700;border-width:1.5px">
-<input id="cPhone" class="inp" placeholder="رقم موبايل الزبون * - 0780...">
+            <form id="loginForm">
+                <input id="loginPhone"
+                       type="tel"
+                       placeholder="رقم الهاتف"
+                       required>
 
-<input id="cItem" class="inp" placeholder="نوع المادة / الجهاز">
-<input id="cTotal" class="inp" type="number" placeholder="المبلغ الكلي">
-<input id="cMonthly" class="inp" type="number" placeholder="القسط الشهري * - يدوي ذهب" style="border-color:#FFD700;border-width:2px;background:#1a1500">
+                <input id="loginPassword"
+                       type="password"
+                       placeholder="كلمة المرور"
+                       required>
 
-<div style="display:flex;gap:8px;margin-top:12px">
-<button class="btn-outline" style="flex:1" onclick="closeAddModal()">إلغاء</button>
-<button class="btn-gold" style="flex:1" onclick="saveCustomer()">حفظ ✅</button>
-</div>
-<p class="small">* = مطلوب | الصور اختيارية تكدر تتخطاها</p>
-</div>
-</div>
-<script>
-function showAuth(t,e){
- document.getElementById('auth-login').classList.add('hidden');
- document.getElementById('auth-register').classList.add('hidden');
- document.getElementById('auth-recover').classList.add('hidden');
- document.getElementById('auth-'+t).classList.remove('hidden');
- document.querySelectorAll('.auth-tab').forEach(x=>x.classList.remove('active'));
- if(e) e.classList.add('active');
-}
-function showTab(t,e){
- document.getElementById('home').classList.add('hidden');
- document.getElementById('customers').classList.add('hidden');
- document.getElementById('help').classList.add('hidden');
- document.getElementById(t).classList.remove('hidden');
- document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
- if(e) e.classList.add('active');
- if(t==='customers') loadCustomers();
- if(t==='help') loadTickets();
-}
-function previewImg(input,id){
-const file=input.files[0];
-if(file){
-const reader=new FileReader();
-reader.onload=function(ev){
-document.getElementById(id).src=ev.target.result;
-document.getElementById(id).classList.remove('hidden');
-};
-reader.readAsDataURL(file);
-}
-}
-async function doRegister(){
-  const d={phone:document.getElementById('regPhone').value,password:document.getElementById('regPass').value,store_name:document.getElementById('regStore').value};
-  const res=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-  const r=await res.json();
-  if(r.ok){document.getElementById('regResult').innerText='Code: '+(r.code||'123456');document.getElementById('otpSection').classList.remove('hidden');}
-}
-async function verifyOtp(){
-const phone=document.getElementById('regPhone').value;
-const code=document.getElementById('otpCode').value;
-const res=await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});
-const r=await res.json();
-if(r.ok){localStorage.setItem('daftari_user',JSON.stringify(r));location.reload();}
-}
-async function doLogin(){
-const phone=document.getElementById('loginPhone').value;
-const pass=document.getElementById('loginPass').value;
-const res=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password:pass})});
-const r=await res.json();
-if(r.ok){localStorage.setItem('daftari_user',JSON.stringify(r));location.reload();}
-}
-function logout(){localStorage.removeItem('daftari_user');location.reload();}
-async function addCustomer(){
-const c={
-name:document.getElementById('custName').value,
-fatherName:document.getElementById('fatherName').value,
-governorate:document.getElementById('governorate').value,
-nationalId:document.getElementById('nationalId').value,
-storeName:document.getElementById('storeName').value,
-itemType:document.getElementById('itemType').value,
-total:document.getElementById('totalAmount').value,
-paid:document.getElementById('paidAmount').value,
-monthly:document.getElementById('monthlyAmount').value,
-phone:document.getElementById('custPhone').value,
-address:document.getElementById('custAddress').value
-};
-const res=await fetch('/store/add-customer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)});
-const d=await res.json();
-document.getElementById('addResult').innerText=d.ok?'Saved!':'Error';
-}
-async function loadCustomers(){
-const res=await fetch('/store/all/customers');
+                <button type="submit">
+                    دخول
+                </button>
+            </form>
 
-const data=await res.json();
-const list=data.customers || [];
-document.getElementById('customersList').innerHTML=list.map(function(c){return '<div class="bg-[#111] p-2 rounded-xl"><p>'+c.name+' - '+c.phone+'</p></div>'}).join('');
-async function sendHelp(){
-const msg=document.getElementById('helpMsg').value;
-const res=await fetch('/help/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
-const d=await res.json();
-document.getElementById('helpResult').innerText=d.ok?'Sent!':'Error';
-}
-async function loadTickets(){
-const res=await fetch('/help/tickets');
-const data=await res.json();
-const list=data.tickets||[];
-document.getElementById('ticketsList').innerHTML=list.map(function(t){return '<div class="bg-black p-2 rounded"><p>'+t.message+'</p></div>'}).join('');
-}
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/static/sw.js');}
-</script>
+            <div id="loginMessage"></div>
+
+            <button class="secondary"
+                    onclick="showSection('home')">
+                رجوع
+            </button>
+        </section>
+
+        <section class="card hidden" id="help">
+            <h2>مركز المساعدة</h2>
+
+            <p>
+                إذا واجهتك مشكلة في استخدام دفتري،
+                يمكنك التواصل مع مطوّر النظام.
+            </p>
+
+            <p>
+                ستتم إضافة معلومات الاتصال والدعم الفني
+                في النسخة القادمة.
+            </p>
+
+            <button class="secondary"
+                    onclick="showSection('home')">
+                رجوع
+            </button>
+        </section>
+
+        <section class="card hidden" id="dashboard">
+            <h2>لوحة المتجر</h2>
+
+            <p id="welcomeMessage"></p>
+
+            <div class="message">
+                تم تسجيل الدخول بنجاح.
+                سنضيف هنا إدارة الزبائن والأقساط
+                في الخطوة التالية.
+            </div>
+
+            <button class="secondary"
+                    onclick="logout()">
+                تسجيل الخروج
+            </button>
+        </section>
+
+    </main>
+
+    <footer>
+        دفتري © 2026
+    </footer>
+
+    <script>
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll(
+                "main section"
+            );
+
+            sections.forEach(function(section) {
+                section.classList.add("hidden");
+            });
+
+            document.getElementById(
+                sectionId
+            ).classList.remove("hidden");
+        }
+
+        document.getElementById(
+            "registerForm"
+        ).addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const account = {
+                owner: document.getElementById(
+                    "ownerName"
+                ).value.trim(),
+
+                father: document.getElementById(
+                    "fatherName"
+                ).value.trim(),
+
+                shop: document.getElementById(
+                    "shopName"
+                ).value.trim(),
+
+                address: document.getElementById(
+                    "shopAddress"
+                ).value.trim(),
+
+                phone: document.getElementById(
+                    "phone"
+                ).value.trim(),
+
+                password: document.getElementById(
+                    "password"
+                ).value
+            };
+
+            let accounts = JSON.parse(
+                localStorage.getItem("daftariAccounts")  "[]"
+            );
+
+            const existing = accounts.find(function(item) {
+                return item.phone === account.phone;
+            });
+
+            if (existing) {
+                document.getElementById(
+                    "registerMessage"
+                ).innerHTML =
+                    '<div class="message">رقم الهاتف مسجل مسبقاً.</div>';
+                return;
+            }
+
+            accounts.push(account);
+
+            localStorage.setItem(
+                "daftariAccounts",
+                JSON.stringify(accounts)
+            );
+      
+
+            document.getElementById(
+                "registerMessage"
+            ).innerHTML =
+                '<div class="message">تم إنشاء الحساب التجريبي. يمكنك تسجيل الدخول الآن.</div>';
+
+            document.getElementById(
+                "registerForm"
+            ).reset();
+        });
+
+        document.getElementById(
+            "loginForm"
+        ).addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const phone = document.getElementById(
+                "loginPhone"
+            ).value.trim();
+
+            const password = document.getElementById(
+                "loginPassword"
+            ).value;
+
+            const accounts = JSON.parse(
+                localStorage.getItem("daftariAccounts")  "[]"
+            );
+
+            const account = accounts.find(function(item) {
+                return item.phone === phone &&
+                       item.password === password;
+            });
+
+            if (!account) {
+                document.getElementById(
+                    "loginMessage"
+                ).innerHTML =
+                    '<div class="message">رقم الهاتف أو كلمة المرور غير صحيحة.</div>';
+                return;
+            }
+
+            localStorage.setItem(
+                "daftariCurrentUser",
+                account.phone
+            );
+
+            document.getElementById(
+                "welcomeMessage"
+            ).textContent =
+                "أهلاً " + account.owner +
+                "، متجرك: " + account.shop;
+
+            document.getElementById(
+                "loginMessage"
+            ).innerHTML = "";
+
+            document.getElementById(
+                "loginForm"
+            ).reset();
+
+            showSection("dashboard");
+        });
+
+        function logout() {
+            localStorage.removeItem("daftariCurrentUser");
+            showSection("home");
+        }
+    </script>
+
 </body>
 </html>
