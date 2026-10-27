@@ -335,19 +335,23 @@ class="input-gold w-full p-3 rounded-xl mb-2 text-sm">
 </div>
 <script>
 function showAuth(t,e){
- document.querySelectorAll('.auth-tab-content').forEach(a=>a.classList.add('hidden'));
- document.getElementById(t+'Tab').classList.remove('hidden');
+ document.getElementById('auth-login').classList.add('hidden');
+ document.getElementById('auth-register').classList.add('hidden');
+ document.getElementById('auth-recover').classList.add('hidden');
+ document.getElementById('auth-'+t).classList.remove('hidden');
  document.querySelectorAll('.auth-tab').forEach(x=>x.classList.remove('active'));
  if(e) e.classList.add('active');
 }
 function showTab(t,e){
- document.querySelectorAll('.tab-content').forEach(a=>a.classList.add('hidden'));
- document.getElementById(t+'Tab').classList.remove('hidden');
+ document.getElementById('home').classList.add('hidden');
+ document.getElementById('customers').classList.add('hidden');
+ document.getElementById('help').classList.add('hidden');
+ document.getElementById(t).classList.remove('hidden');
  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
  if(e) e.classList.add('active');
  if(t==='customers') loadCustomers();
  if(t==='help') loadTickets();
-}  
+}
 function previewImg(input,id){
 const file=input.files[0];
 if(file){
