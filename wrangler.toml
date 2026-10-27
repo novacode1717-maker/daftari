@@ -1,8 +1,7 @@
 name = "daftari-as"
-main = "functions/api.js"
 compatibility_date = "2024-01-01"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "daftari_db"
-database_id = "d6716de4-8df5-4375-91dd-550c5f175690e"
+database_id = "d6716de4-8df5-4375-91dd-550c5f17569e"
