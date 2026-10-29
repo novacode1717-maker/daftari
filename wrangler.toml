@@ -1,6 +1,6 @@
 name = "daftari-as"
 main = "index.js"
-compatibility_date = "2026-10-30"
+compatibility_date = "2026-9-23"
 
 [[d1_databases]]
 binding = "DB"
