@@ -1,8 +1,17 @@
 export default {
-  async fetch(request, env) {
-    // هنا يمكنك كتابة أوامر SQL للاتصال بقاعدة البيانات
-    // مثال: const result = await env.DB.prepare("SELECT * FROM your_table").all();
-    return new Response("Worker is connected to D1!", { status: 200 });
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // 1. إذا كان الطلب لملف API (عشان جلب بيانات الزبائن لاحقاً)
+    if (url.pathname.startsWith('/api/')) {
+      // هنا راح نكتب كود جلب البيانات من الداتابيس لاحقاً
+      return new Response(JSON.stringify({ message: "API is working" }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // 2. أي طلب ثاني (مثل فتح الصفحة الرئيسية)، خليه يروح لملفات الـ HTML
+    // هذا الأمر يخلي كلودفلير يجيب ملف index.html وملفاته من الـ Assets
+    return env.ASSETS.fetch(request);
   }
 };
-
