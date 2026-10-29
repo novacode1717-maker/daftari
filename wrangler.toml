@@ -9,3 +9,4 @@ database_id = "d6716de4-8df5-4375-91dd-550c5f175690"
 
 [assets]
 directory = "."
+binding = "ASSETS"
