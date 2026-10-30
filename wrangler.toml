@@ -10,4 +10,4 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "daftari_db"
-database_id = "ضع_هنا_معرف_قاعدة_البيانات_الحقيقي"
+database_id = "d6716de4-8df5-4375-91dd-550c5f175690"
