@@ -1,11 +1,6 @@
 name = "daftari-as"
 main = "index.js"
-compatibility_date = "2026-09-23"
-
-[assets]
-directory = "."
-binding = "ASSETS"
-run_worker_first = ["/api/*"]
+compatibility_date = "2026-10-31"
 
 [[d1_databases]]
 binding = "DB"
