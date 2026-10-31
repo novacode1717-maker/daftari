@@ -1,394 +1,455 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دفتري - نظام الأقساط</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<title>دفتري - نظام الأقساط</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+:root {
+  --bg: #080808;
+  --panel: #151515;
+  --panel2: #202020;
+  --gold: #ffd700;
+  --text: #f5f5f5;
+  --muted: #b9b9b9;
+  --line: #343434;
+  --danger: #ff7777;
+  --ok: #7ee0a0;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f3f5f9;
-            color: #222;
-        }
+* {
+  box-sizing: border-box;
+}
 
-        header {
-            background: #173b68;
-            color: white;
-            padding: 25px 15px;
-            text-align: center;
-        }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Tahoma, sans-serif;
+  line-height: 1.6;
+}
 
-        header h1 {
-            margin: 0 0 10px;
-            font-size: 30px;
-        }
+header {
+  background: #050505;
+  border-bottom: 1px solid #574900;
+  padding: 18px 14px;
+  text-align: center;
+}
 
-        header p {
-            margin: 0;
-            color: #dce8f7;
-        }
+header h1 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 30px;
+}
 
-        .container {
-            width: 92%;
-            max-width: 600px;
-            margin: 35px auto;
-        }
+header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
 
-        .card {
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 14px;
-            box-shadow: 0 4px 15px #0000000d;
-        }
+.container {
+  width: min(100% - 24px, 760px);
+  margin: 22px auto;
+}
 
-        .card h2 {
-            margin-top: 0;
-            color: #173b68;
-        }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 25px #0005;
+}
 
-        button {
-            width: 100%;
-            padding: 14px;
-            margin-top: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #173b68;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
+h2, h3 {
+  color: var(--gold);
+  margin-top: 0;
+}
 
-        button:hover {
-            background: #24558f;
-        }
+label {
+  display: block;
+  margin-top: 12px;
+  color: #e7e7e7;
+  font-size: 14px;
+}
 
-        .secondary {
-            background: #e8edf5;
-            color: #173b68;
-        }
+input, textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 13px;
+  border: 1px solid #444;
+  border-radius: 9px;
+  background: #0e0e0e;
+  color: white;
+  font-size: 16px;
+}
 
-        .secondary:hover {
-            background: #d9e2ef;
-        }
+input:focus, textarea:focus {
+  outline: 1px solid var(--gold);
+  border-color: var(--gold);
+}
 
-        input {
-            display: block;
-            width: 100%;
-            padding: 13px;
-            margin-top: 12px;
-            border: 1px solid #d4d9e2;
-            border-radius: 8px;
-            font-size: 15px;
-        }
+button {
+  border: 0;
+  border-radius: 9px;
+  background: var(--gold);
+  color: #111;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 12px 15px;
+  cursor: pointer;
+  margin-top: 12px;
+}
 
-        .hidden {
-            display: none;
-        }
+button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
 
-        .message {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            background: #edf5ff;
-            color: #173b68;
-            line-height: 1.8;
-        }
+button.secondary {
+  background: #303030;
+  color: #fff;
+  border: 1px solid #484848;
+}
 
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: #777;
-        }
+button.danger {
+  background: #552020;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.message {
+  margin-top: 12px;
+  padding: 11px;
+  border-radius: 8px;
+  background: #252525;
+  overflow-wrap: anywhere;
+}
+
+.message.error {
+  border: 1px solid #8d3535;
+  color: #ffb1b1;
+}
+
+.message.success {
+  border: 1px solid #34734a;
+  color: #a8f0bd;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  background: #101010;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.stat small {
+  display: block;
+  color: var(--muted);
+}
+
+.stat strong {
+  display: block;
+  color: var(--gold);
+  overflow-wrap: anywhere;
+}
+
+.customer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.customer:last-child {
+  border-bottom: 0;
+}
+
+.customer h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 17px;
+}
+
+.customer p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.customer button {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detail {
+  padding: 12px;
+  background: #101010;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.detail span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  text-align: right;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--gold);
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+  font-size: 13px;
+}
+
+@media (max-width: 520px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .customer {
+    align-items: flex-start;
+  }
+
+  .customer button {
+    padding: 10px;
+  }
+}
     </style>
 </head>
 
 <body>
 
-    <header>
-        <h1>دفتري</h1>
-        <p>نظام إدارة المحلات والأقساط إلكترونياً</p>
-    </header>
+<header>
+  <h1>دفتري</h1>
+  <p>نظام إدارة المحلات والأقساط إلكترونياً</p>
+  <p id="headerStatus" class="muted">حسابك التجاري</p>
+</header>
 
-    <main class="container">
+<main class="container">
 
-        <section class="card" id="home">
-            <h2>أهلاً وسهلاً بك</h2>
-            <p>إدارة حسابات زبائنك وأقساطهم بسهولة من مكان واحد.</p>
+  <section class="card" id="authSection">
 
-            <button onclick="showSection('register')">
-                إنشاء حساب متجر
-            </button>
+    <div id="authTabs" class="actions">
+      <button type="button" data-auth="login">
+        تسجيل الدخول
+      </button>
 
-            <button class="secondary"
-                    onclick="showSection('login')">
-                تسجيل الدخول
-            </button>
+      <button type="button" class="secondary" data-auth="register">
+        إنشاء حساب
+      </button>
 
-            <button class="secondary"
-                    onclick="showSection('help')">
-                مركز المساعدة
-            </button>
-        </section>
+      <button type="button" class="secondary" data-auth="forgot">
+        نسيت كلمة المرور
+      </button>
+    </div>
 
-        <section class="card hidden" id="register">
-            <h2>إنشاء حساب متجر</h2>
+    <div id="authMessage" aria-live="polite"></div>
 
-            <form id="registerForm">
-                <input id="ownerName"
-                       type="text"
-                       placeholder="اسم صاحب المتجر"
-                       required>
+    <form id="loginForm">
+      <h2>تسجيل الدخول</h2>
 
-                <input id="fatherName"
-                       type="text"
-                       placeholder="اسم الأب"
-                       required>
+      <label for="loginEmail">البريد الإلكتروني</label>
+      <input
+        id="loginEmail"
+        type="email"
+        autocomplete="email"
+        required
+      >
 
-                <input id="shopName"
-                       type="text"
-                       placeholder="اسم المحل أو الشركة"
-                       required>
+      <label for="loginPassword">كلمة المرور</label>
+      <input
+        id="loginPassword"
+        type="password"
+        autocomplete="current-password"
+        required
+      >
 
-                <input id="shopAddress"
-                       type="text"
-                       placeholder="عنوان المتجر"
-                       required>
+      <button type="submit">دخول إلى متجري</button>
+    </form>
 
-                <input id="phone"
-                       type="tel"
-                       placeholder="رقم الهاتف"
-                       required>
+    <form id="registerForm" class="hidden">
+      <h2>إنشاء حساب متجر</h2>
 
-                <input id="password"
-                       type="password"
-                       placeholder="كلمة المرور"
-                       required>
-                       <button type="submit">
-                    إنشاء الحساب
-                </button>
-            </form>
+      <label for="ownerName">اسم صاحب المتجر</label>
+      <input id="ownerName" autocomplete="name" required>
 
-            <div id="registerMessage"></div>
+      <label for="fatherName">اسم الأب</label>
+      <input id="fatherName" required>
 
-            <button class="secondary"
-                    onclick="showSection('home')">
-                رجوع
-            </button>
-        </section>
+      <label for="shopName">اسم المحل أو الشركة</label>
+      <input id="shopName" required>
 
-        <section class="card hidden" id="login">
-            <h2>تسجيل الدخول</h2>
+      <label for="shopAddress">عنوان المتجر</label>
+      <input id="shopAddress" required>
 
-            <form id="loginForm">
-                <input id="loginPhone"
-                       type="tel"
-                       placeholder="رقم الهاتف"
-                       required>
+      <label for="registerEmail">البريد الإلكتروني</label>
+      <input
+        id="registerEmail"
+        type="email"
+        autocomplete="email"
+        required
+      >
 
-                <input id="loginPassword"
-                       type="password"
-                       placeholder="كلمة المرور"
-                       required>
+      <label for="registerPassword">
+        كلمة المرور (12 حرفاً على الأقل)
+      </label>
+      <input
+        id="registerPassword"
+        type="password"
+        minlength="12"
+        autocomplete="new-password"
+        required
+      >
 
-                <button type="submit">
-                    دخول
-                </button>
-            </form>
+      <label for="confirmPassword">تأكيد كلمة المرور</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        minlength="12"
+        autocomplete="new-password"
+        required
+      >
 
-            <div id="loginMessage"></div>
+      <button type="submit">
+        إنشاء الحساب وإرسال رمز التحقق
+      </button>
+    </form>
 
-            <button class="secondary"
-                    onclick="showSection('home')">
-                رجوع
-            </button>
-        </section>
+    <form id="verifyForm" class="hidden">
+      <h2>تأكيد البريد الإلكتروني</h2>
 
-        <section class="card hidden" id="help">
-            <h2>مركز المساعدة</h2>
+      <p class="muted">
+        أدخل البريد الإلكتروني والرمز المكوّن من 6 أرقام
+        الذي وصلك بالبريد.
+      </p>
 
-            <p>
-                إذا واجهتك مشكلة في استخدام دفتري،
-                يمكنك التواصل مع مطوّر النظام.
-            </p>
+      <label for="verifyEmail">البريد الإلكتروني</label>
+      <input id="verifyEmail" type="email" required>
 
-            <p>
-                ستتم إضافة معلومات الاتصال والدعم الفني
-                في النسخة القادمة.
-            </p>
+      <label for="verifyCode">رمز التحقق</label>
+      <input
+        id="verifyCode"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        required
+      >
 
-            <button class="secondary"
-                    onclick="showSection('home')">
-                رجوع
-            </button>
-        </section>
+      <button type="submit">تأكيد البريد</button>
 
-        <section class="card hidden" id="dashboard">
-            <h2>لوحة المتجر</h2>
+      <button type="button" id="resendCode" class="secondary">
+        إعادة إرسال الرمز
+      </button>
+    </form>
 
-            <p id="welcomeMessage"></p>
+    <form id="forgotForm" class="hidden">
+      <h2>استرجاع كلمة المرور</h2>
 
-            <div class="message">
-                تم تسجيل الدخول بنجاح.
-                سنضيف هنا إدارة الزبائن والأقساط
-                في الخطوة التالية.
-            </div>
+      <label for="forgotEmail">البريد الإلكتروني المسجل</label>
+      <input id="forgotEmail" type="email" required>
 
-            <button class="secondary"
-                    onclick="logout()">
-                تسجيل الخروج
-            </button>
-        </section>
+      <button type="submit">إرسال رابط الاسترجاع</button>
+    </form>
 
-    </main>
+    <form id="resetForm" class="hidden">
+      <h2>تعيين كلمة مرور جديدة</h2>
 
-    <footer>
-        دفتري © 2026
-    </footer>
+      <label for="resetPassword">كلمة المرور الجديدة</label>
+      <input
+        id="resetPassword"
+        type="password"
+        minlength="12"
+        autocomplete="new-password"
+        required
+      >
 
-    <script>
-        function showSection(sectionId) {
-            const sections = document.querySelectorAll(
-                "main section"
-            );
+      <label for="resetConfirm">تأكيد كلمة المرور</label>
+      <input
+        id="resetConfirm"
+        type="password"
+        minlength="12"
+        autocomplete="new-password"
+        required
+      >
 
-            sections.forEach(function(section) {
-                section.classList.add("hidden");
-            });
+      <button type="submit">حفظ كلمة المرور الجديدة</button>
+    </form>
 
-            document.getElementById(
-                sectionId
-            ).classList.remove("hidden");
-        }
-
-        document.getElementById(
-            "registerForm"
-        ).addEventListener("submit", function(event) {
-            event.preventDefault();
-
-            const account = {
-                owner: document.getElementById(
-                    "ownerName"
-                ).value.trim(),
-
-                father: document.getElementById(
-                    "fatherName"
-                ).value.trim(),
-
-                shop: document.getElementById(
-                    "shopName"
-                ).value.trim(),
-
-                address: document.getElementById(
-                    "shopAddress"
-                ).value.trim(),
-
-                phone: document.getElementById(
-                    "phone"
-                ).value.trim(),
-
-                password: document.getElementById(
-                    "password"
-                ).value
-            };
-
-            let accounts = JSON.parse(
-                localStorage.getItem("daftariAccounts")  || "[]"
-            );
-
-            const existing = accounts.find(function(item) {
-                return item.phone === account.phone;
-            });
-
-            if (existing) {
-                document.getElementById(
-                    "registerMessage"
-                ).innerHTML =
-                    '<div class="message">رقم الهاتف مسجل مسبقاً.</div>';
-                return;
-            }
-
-            accounts.push(account);
-
-            localStorage.setItem(
-                "daftariAccounts",
-                JSON.stringify(accounts)
-            );
-      
-
-            document.getElementById(
-                "registerMessage"
-            ).innerHTML =
-                '<div class="message">تم إنشاء الحساب التجريبي. يمكنك تسجيل الدخول الآن.</div>';
-
-            document.getElementById(
-                "registerForm"
-            ).reset();
-        });
-
-        document.getElementById(
-            "loginForm"
-        ).addEventListener("submit", function(event) {
-            event.preventDefault();
-
-            const phone = document.getElementById(
-                "loginPhone"
-            ).value.trim();
-
-            const password = document.getElementById(
-                "loginPassword"
-            ).value;
-
-            const accounts = JSON.parse(
-                localStorage.getItem("daftariAccounts") || "[]"
-            );
-
-            const account = accounts.find(function(item) {
-                return item.phone === phone &&
-                       item.password === password;
-            });
-
-            if (!account) {
-                document.getElementById(
-                    "loginMessage"
-                ).innerHTML =
-                    '<div class="message">رقم الهاتف أو كلمة المرور غير صحيحة.</div>';
-                return;
-            }
-
-            localStorage.setItem(
-                "daftariCurrentUser",
-                account.phone
-            );
-
-            document.getElementById(
-                "welcomeMessage"
-            ).textContent =
-                "أهلاً " + account.owner +
-                "، متجرك: " + account.shop;
-
-            document.getElementById(
-                "loginMessage"
-            ).innerHTML = "";
-
-            document.getElementById(
-                "loginForm"
-            ).reset();
-
-            showSection("dashboard");
-        });
-
-        function logout() {
-            localStorage.removeItem("daftariCurrentUser");
-            showSection("home");
-        }
-    </script>
-
+  </section>
+</main>
 </body>
 </html>
+
