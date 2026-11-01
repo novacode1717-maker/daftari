@@ -363,12 +363,12 @@ footer {
       >
 
       <label for="registerPassword">
-        كلمة المرور (12 حرفاً على الأقل)
+        كلمة المرور 6 حرفاً على الأقل)
       </label>
       <input
         id="registerPassword"
         type="password"
-        minlength="12"
+        minlength="6"
         autocomplete="new-password"
         required
       >
@@ -450,6 +450,215 @@ footer {
 
   </section>
 </main>
+<script>
+const $ = id => document.getElementById(id);
+
+const forms = [
+  "loginForm",
+  "registerForm",
+  "verifyForm",
+  "forgotForm",
+  "resetForm"
+];
+
+function showForm(id) {
+  forms.forEach(formId => $(formId).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+
+  $("authMessage").textContent = "";
+  $("authMessage").className = "";
+
+  const isReset = id === "resetForm";
+  $("authTabs").classList.toggle(
+    "hidden",
+    isReset  id === "verifyForm"
+  );
+}
+
+function showMessage(text, success = false) {
+  const el = $("authMessage");
+  el.textContent = text;
+  el.className = "message " + (success ? "success" : "error");
+}
+
+async function sendRequest(path, data) {
+  const response = await fetch("/api" + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(data)
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      result.error  result.message  "حدث خطأ، حاول مرة أخرى."
+    );
+  }
+
+  return result;
+}
+
+$("authTabs").addEventListener("click", event => {
+  const type = event.target.dataset.auth;
+
+  if (type === "login") showForm("loginForm");
+  if (type === "register") showForm("registerForm");
+  if (type === "forgot") {
+    $("forgotEmail").value = $("loginEmail").value;
+    showForm("forgotForm");
+  }
+});
+
+$("registerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const password = $("registerPassword").value;
+
+  if (password.length < 6) {
+    return showMessage("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
+  }
+
+  if (password !== $("confirmPassword").value) {
+    return showMessage("كلمتا المرور غير متطابقتين.");
+  }
+
+  const button = event.submitter;
+  if (button) button.disabled = true;
+
+  try {
+    const result = await sendRequest("/auth/register", {
+      ownerName: $("ownerName").value.trim(),
+      fatherName: $("fatherName").value.trim(),
+      shopName: $("shopName").value.trim(),
+      shopAddress: $("shopAddress").value.trim(),
+      email: $("registerEmail").value.trim(),
+      password
+    });
+
+    $("verifyEmail").value = $("registerEmail").value.trim();
+    showForm("verifyForm");
+    showMessage(
+      result.message  "تحقق من بريدك الإلكتروني للحصول على رمز التفعيل.",
+      true
+    );
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+$("verifyForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const result = await sendRequest("/auth/verify-email", {
+      email: $("verifyEmail").value.trim(),
+      code: $("verifyCode").value.trim()
+    });
+
+    showForm("loginForm");
+    $("loginEmail").value = $("verifyEmail").value.trim();
+    showMessage(result.message  "تم التحقق. يمكنك تسجيل الدخول الآن.", true);
+  } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+$("resendCode").addEventListener("click", async () => {
+  try {
+    const result = await sendRequest("/auth/resend-code", {
+      email: $("verifyEmail").value.trim()
+    });
+
+    showMessage(result.message  "تم طلب إعادة إرسال الرمز.", true);
+  } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const result = await sendRequest("/auth/login", {
+      email: $("loginEmail").value.trim(),
+      password: $("loginPassword").value
+    });
+
+    showMessage(
+      result.message  "تم تسجيل الدخول بنجاح.",
+      true
+    );
+
+    // إذا كان الخادم يعيد رابط لوحة التحكم، انتقل إليه.
+    if (result.redirect) {
+      location.href = result.redirect;
+    }
+  } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+$("forgotForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const result = await sendRequest("/auth/forgot-password", {
+      email: $("forgotEmail").value.trim()
+    });
+
+    showMessage(
+      result.message  "إذا كان البريد مسجلاً، فستصلك تعليمات الاسترجاع.",
+      true
+    );
+    } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+$("resetForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const password = $("resetPassword").value;
+
+  if (password.length < 6) {
+    return showMessage("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
+  }
+
+  if (password !== $("resetConfirm").value) {
+    return showMessage("كلمتا المرور غير متطابقتين.");
+  }
+
+  const token = new URLSearchParams(location.search).get("token");
+
+  if (!token) {
+    return showMessage("رابط الاسترجاع غير صالح أو انتهت صلاحيته.");
+  }
+
+  try {
+    const result = await sendRequest("/auth/reset-password", {
+      token,
+      password
+    });
+
+    history.replaceState({}, "", location.pathname);
+    showForm("loginForm");
+    showMessage(result.message || "تم تغيير كلمة المرور.", true);
+  } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+// فتح نموذج الاسترجاع تلقائياً عند وجود رمز في الرابط.
+if (new URLSearchParams(location.search).has("token")) {
+  showForm("resetForm");
+} else {
+  showForm("loginForm");
+}
+</script>
 </body>
 </html>
 
