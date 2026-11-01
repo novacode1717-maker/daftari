@@ -493,7 +493,7 @@ async function sendRequest(path, data) {
 
   if (!response.ok) {
     throw new Error(
-      result.error  result.message  "حدث خطأ، حاول مرة أخرى."
+      result.error  result.message || "حدث خطأ، حاول مرة أخرى."
     );
   }
 
@@ -540,7 +540,7 @@ $("registerForm").addEventListener("submit", async event => {
     $("verifyEmail").value = $("registerEmail").value.trim();
     showForm("verifyForm");
     showMessage(
-      result.message  "تحقق من بريدك الإلكتروني للحصول على رمز التفعيل.",
+      result.message  || "تحقق من بريدك الإلكتروني للحصول على رمز التفعيل.",
       true
     );
   } catch (error) {
@@ -561,7 +561,7 @@ $("verifyForm").addEventListener("submit", async event => {
 
     showForm("loginForm");
     $("loginEmail").value = $("verifyEmail").value.trim();
-    showMessage(result.message  "تم التحقق. يمكنك تسجيل الدخول الآن.", true);
+    showMessage(result.message || "تم التحقق. يمكنك تسجيل الدخول الآن.", true);
   } catch (error) {
     showMessage(error.message);
   }
@@ -573,7 +573,7 @@ $("resendCode").addEventListener("click", async () => {
       email: $("verifyEmail").value.trim()
     });
 
-    showMessage(result.message  "تم طلب إعادة إرسال الرمز.", true);
+    showMessage(result.message || "تم طلب إعادة إرسال الرمز.", true);
   } catch (error) {
     showMessage(error.message);
   }
@@ -589,7 +589,7 @@ $("loginForm").addEventListener("submit", async event => {
     });
 
     showMessage(
-      result.message  "تم تسجيل الدخول بنجاح.",
+      result.message || "تم تسجيل الدخول بنجاح.",
       true
     );
 
