@@ -565,9 +565,10 @@ async function register(request, env) {
     return json({ error: "البريد الإلكتروني غير صحيح." }, 400, request);
   }
 
-  if (password.length < 12  password.length > 128) {
+  if (password.length < 6 ||
+      password.length > 128) {
     return json({
-      error: "كلمة المرور يجب أن تكون بين 12 و128 حرفاً."
+      error: "كلمة المرور يجب أن تكون بين 6  و128 حرفاً."
     }, 400, request);
   }
 
