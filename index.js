@@ -566,7 +566,7 @@ async function register(request, env) {
   }
 
   if (password.length < 6 ||
-      password.length > 128) {
+  password.length > 128) {
     return json({
       error: "كلمة المرور يجب أن تكون بين 6  و128 حرفاً."
     }, 400, request);
@@ -877,7 +877,8 @@ async function resetPassword(request, env) {
     return json({ error: "رابط الاسترجاع غير صالح." }, 400, request);
   }
 
-  if (password.length < 6  password.length > 128) {
+  if (password.length < 6 ||
+  password.length > 128) {
     return json({
       error: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً."
     }, 400, request);
