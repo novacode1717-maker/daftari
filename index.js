@@ -1,14 +1,6 @@
 /*
  * Daftari - Cloudflare Workers + D1
  * File: index.js
- *
- * Required bindings:
- *   DB              -> Cloudflare D1 database
- *
- * Required secrets/settings for email:
- *   RESEND_API_KEY  -> Resend API key
- *   MAIL_FROM       -> Verified sender, e.g. Daftari <noreply@example.com>
- *   APP_BASE_URL    -> Public URL of your application
  */
 
 const SESSION_DAYS = 7;
@@ -17,17 +9,18 @@ const RESET_MINUTES = 30;
 const PASSWORD_ITERATIONS = 310000;
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "",
-  "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Credentials": "true"
 };
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, "") || "/";
+    const method = request.method.toUpperCase();
 
-    if (request.method === "OPTIONS") {
+    if (method === "OPTIONS") {
       return new Response(null, {
         status: 204,
         headers: {
@@ -39,14 +32,16 @@ export default {
 
     try {
       if (!env.DB) {
-        return json({ error: "قاعدة البيانات DB غير مربوطة بإعدادات Workers." }, 500, request);
+        return json({
+          error: "قاعدة البيانات DB غير مربوطة."
+        }, 500, request);
       }
 
-      const path = url.pathname.replace(/\/+$/, "") || "/";
-      const method = request.method.toUpperCase();
-
       if (method === "GET" && path === "/api/health") {
-        return json({ status: "ok", service: "daftari" }, 200, request);
+        return json({
+          status: "ok",
+          service: "daftari"
+        }, 200, request);
       }
 
       // Authentication
@@ -78,42 +73,55 @@ export default {
         return await resetPassword(request, env);
       }
 
-      // Customer list and creation
+      // Customer list
       if (method === "GET" && path === "/api/customers") {
         const session = await requireSession(request, env);
+
         if (session.error) return session.error;
 
         const result = await env.DB.prepare(
           SELECT
-            c.id,
-            c.name,
-            c.phone,
-            c.address,
-            c.purchase_name AS purchaseName,
-            c.total,
-            c.paid,
-            c.monthly,
-            (c.total - c.paid) AS remaining,
-            c.created_at AS createdAt
-          FROM customers c
-          WHERE c.owner_id = ?
-          ORDER BY c.created_at DESC
+            id,
+            name,
+            phone,
+            address,
+            purchase_name AS purchaseName,
+            total,
+            paid,
+            monthly,
+            (total - paid) AS remaining,
+            created_at AS createdAt
+          FROM customers
+          WHERE user_id = ?
+          ORDER BY created_at DESC
         ).bind(session.user.id).all();
 
-        return json({ customers: result.results || [] }, 200, request);
+        return json({
+          customers: result.results || []
+        }, 200, request);
       }
 
+      // Add customer
       if (method === "POST" && path === "/api/customers") {
         const session = await requireSession(request, env);
+
         if (session.error) return session.error;
-        return await createCustomer(request, env, session.user);
+
+        return await createCustomer(
+          request,
+          env,
+          session.user
+        );
       }
 
-      // Customer details: /api/customers/:id
-      const customerMatch = path.match(/^\/api\/customers\/([^/]+)$/);
+      // Customer details
+      const customerMatch = path.match(
+        /^\/api\/customers\/([^/]+)$/
+      );
 
       if (method === "GET" && customerMatch) {
         const session = await requireSession(request, env);
+
         if (session.error) return session.error;
 
         const customer = await getCustomer(
@@ -123,29 +131,35 @@ export default {
         );
 
         if (!customer) {
-          return json({ error: "الزبون غير موجود." }, 404, request);
+          return json({
+            error: "الزبون غير موجود."
+          }, 404, request);
         }
 
         const history = await env.DB.prepare(
-          SELECT id, description, amount, date
-          FROM customer_history
-          WHERE owner_id = ? AND customer_id = ?
+          SELECT
+            id,
+            description,
+            amount,
+            created_at AS date
+          FROM payment_history
+          WHERE user_id = ? AND customer_id = ?
           ORDER BY created_at DESC
         ).bind(session.user.id, customer.id).all();
 
         return json({
           ...customer,
           history: history.results || []
-            }, 200, request);
+        }, 200, request);
       }
 
-      // Payment: POST /api/customers/:id/payments
+      // Customer payment
       const paymentMatch = path.match(
         /^\/api\/customers\/([^/]+)\/payments$/
       );
-
       if (method === "POST" && paymentMatch) {
         const session = await requireSession(request, env);
+
         if (session.error) return session.error;
 
         return await addPayment(
@@ -156,99 +170,90 @@ export default {
         );
       }
 
-      return json({ error: "المسار المطلوب غير موجود." }, 404, request);
+      return json({
+        error: "المسار المطلوب غير موجود."
+      }, 404, request);
 
     } catch (error) {
       console.error("Daftari Worker error:", error);
 
       return json({
-        error: "حدث خطأ داخلي. تحقق من إعدادات الخادم وقاعدة البيانات."
+        error: "حدث خطأ داخلي في الخادم."
       }, 500, request);
     }
   }
 };
-
-
-// --------------------------------------------------
-// General helpers
-// --------------------------------------------------
+// ==========================================
+// PART 2: HELPER FUNCTIONS & SECURITY
+// ==========================================
 
 function json(data, status = 200, request = null, extraHeaders = {}) {
-  const headers = new Headers({
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    ...extraHeaders
-  });
+  const headers = new Headers(extraHeaders);
+
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  headers.set("Cache-Control", "no-store");
+  headers.set("X-Content-Type-Options", "nosniff");
 
   if (request) {
-    headers.set("Access-Control-Allow-Origin", new URL(request.url).origin);
-    headers.set("Access-Control-Allow-Credentials", "true");
-    headers.set("Vary", "Origin");
+    const origin = request.headers.get("Origin");
+
+    if (origin) {
+      headers.set("Access-Control-Allow-Origin", origin);
+      headers.set("Access-Control-Allow-Credentials", "true");
+      headers.set("Vary", "Origin");
+    }
   }
 
-  return new Response(JSON.stringify(data), { status, headers });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers
+  });
 }
 
 function cookieOptions(request, maxAge) {
-  const secure = new URL(request.url).protocol === "https:";
+  const secure = new URL(request.url).protocol === "https:"
+    ? "; Secure"
+    : "";
 
-  return [
-    "HttpOnly",
-    "Path=/",
-    "SameSite=Lax",
-    Max-Age=${maxAge},
-    secure ? "Secure" : ""
-  ].filter(Boolean).join("; ");
+  return HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure};
 }
 
 function clearCookie(request) {
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Set-Cookie": daftari_session=; ${cookieOptions(request, 0)},
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": new URL(request.url).origin,
-      "Access-Control-Allow-Credentials": "true",
-      "Vary": "Origin"
+  return json(
+    { success: true, message: "تم تسجيل الخروج" },
+    200,
+    request,
+    {
+      "Set-Cookie": daftari_session=; ${cookieOptions(request, 0)}
     }
-  });
+  );
 }
 
 async function readBody(request) {
-  const type = request.headers.get("content-type")  "";
-
-  if (!type.includes("application/json")) {
-    throw new Error("يجب إرسال البيانات بصيغة JSON.");
-  }
-
-  let body;
-
   try {
-    body = await request.json();
+    const body = await request.json();
+
+    if (!body  typeof body !== "object"  Array.isArray(body)) {
+      return null;
+    }
+
+    return body;
   } catch {
-    throw new Error("صيغة البيانات غير صحيحة.");
+    return null;
   }
-
-  if (!body  typeof body !== "object" || Array.isArray(body)) {
-    throw new Error("البيانات المرسلة غير صحيحة.");
-  }
-
-  return body;
 }
 
-function cleanText(value, max = 200) {
+function cleanText(value, maxLength = 200) {
   if (typeof value !== "string") return "";
-  return value.trim().slice(0, max);
-}
-
-function validEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return value.trim().slice(0, maxLength);
 }
 
 function normalizeEmail(value) {
   return cleanText(value, 254).toLowerCase();
+}
+
+function validEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function validAmount(value, allowZero = false) {
@@ -257,7 +262,8 @@ function validAmount(value, allowZero = false) {
 }
 
 function randomHex(bytes = 32) {
-  const data = crypto.getRandomValues(new Uint8Array(bytes));
+  const data = new Uint8Array(bytes);
+  crypto.getRandomValues(data);
 
   return Array.from(data)
     .map(byte => byte.toString(16).padStart(2, "0"))
@@ -265,23 +271,23 @@ function randomHex(bytes = 32) {
 }
 
 function randomCode() {
-  const values = crypto.getRandomValues(new Uint32Array(1));
-  return String(values[0] % 1000000).padStart(6, "0");
+  const data = new Uint32Array(1);
+  crypto.getRandomValues(data);
+
+  return String(data[0] % 1000000).padStart(6, "0");
 }
 
 async function sha256(value) {
-  const result = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value)
-  );
+  const data = new TextEncoder().encode(value);
+  const hash = await crypto.subtle.digest("SHA-256", data);
 
-  return Array.from(new Uint8Array(result))
+  return Array.from(new Uint8Array(hash))
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 }
 
 async function hashPassword(password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const salt = randomHex(16);
 
   const key = await crypto.subtle.importKey(
     "raw",
@@ -291,21 +297,24 @@ async function hashPassword(password) {
     ["deriveBits"]
   );
 
-  const bits = await crypto.subtle.deriveBits({
-    name: "PBKDF2",
-    salt,
-    iterations: PASSWORD_ITERATIONS,
-    hash: "SHA-256"
-  }, key, 256);
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: new Uint8Array(
+        salt.match(/.{2}/g).map(byte => parseInt(byte, 16))
+      ),
+      iterations: PASSWORD_ITERATIONS,
+      hash: "SHA-256"
+    },
+    key,
+    256
+  );
 
-  const saltHex = Array.from(salt)
+  const hash = Array.from(new Uint8Array(bits))
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
-  const hashHex = Array.from(new Uint8Array(bits))
-    .map(byte => byte.toString(16).padStart(2, "0"))
-    .join("");
 
-  return pbkdf2$${PASSWORD_ITERATIONS}$${saltHex}$${hashHex};
+  return pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash};
 }
 
 async function verifyPassword(password, stored) {
@@ -317,18 +326,18 @@ async function verifyPassword(password, stored) {
     }
 
     const iterations = Number(parts[1]);
+    const salt = parts[2];
+    const originalHash = parts[3];
 
-    if (!Number.isInteger(iterations) 
-        iterations < 100000 
-        iterations > 1000000) {
+    if (
+      !Number.isInteger(iterations) 
+      iterations < 100000 
+      iterations > 1000000 
+      !/^[a-f0-9]{32}$/.test(salt) 
+      !/^[a-f0-9]{64}$/.test(originalHash)
+    ) {
       return false;
     }
-
-    const salt = new Uint8Array(
-      parts[2].match(/.{2}/g).map(byte => parseInt(byte, 16))
-    );
-
-    const expected = parts[3];
 
     const key = await crypto.subtle.importKey(
       "raw",
@@ -338,25 +347,34 @@ async function verifyPassword(password, stored) {
       ["deriveBits"]
     );
 
-    const bits = await crypto.subtle.deriveBits({
-      name: "PBKDF2",
-      salt,
-      iterations,
-      hash: "SHA-256"
-    }, key, 256);
+    const bits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: new Uint8Array(
+          salt.match(/.{2}/g).map(byte => parseInt(byte, 16))
+        ),
+        iterations,
+        hash: "SHA-256"
+      },
+      key,
+      256
+    );
 
-    const actual = Array.from(new Uint8Array(bits))
+    const newHash = Array.from(new Uint8Array(bits))
+    
       .map(byte => byte.toString(16).padStart(2, "0"))
       .join("");
 
-    return actual === expected;
+    return newHash === originalHash;
   } catch {
     return false;
   }
 }
 
 function expiration(minutes) {
-  return new Date(Date.now() + minutes * 60 * 1000).toISOString();
+  return new Date(
+    Date.now() + minutes * 60 * 1000
+  ).toISOString();
 }
 
 function isExpired(value) {
@@ -365,40 +383,41 @@ function isExpired(value) {
 
 async function sendEmail(env, to, subject, html) {
   if (!env.RESEND_API_KEY || !env.MAIL_FROM) {
-    throw new Error(
-      "إعداد البريد غير مكتمل. أضف RESEND_API_KEY وMAIL_FROM."
-    );
+    throw new Error("إعدادات البريد الإلكتروني غير مكتملة");
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": Bearer ${env.RESEND_API_KEY},
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: env.MAIL_FROM,
-      to: [to],
-      subject,
-      html
-    })
-  });
+  const response = await fetch(
+    "https://api.resend.com/emails",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": Bearer ${env.RESEND_API_KEY},
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: env.MAIL_FROM,
+        to: [to],
+        subject,
+        html
+      })
+    }
+  );
 
   if (!response.ok) {
-    console.error("Email provider failed:", response.status);
-    throw new Error("تعذر إرسال البريد الإلكتروني. تحقق من إعدادات البريد.");
+    throw new Error("فشل إرسال البريد الإلكتروني");
   }
+
+  return true;
 }
 
 function emailCodeHtml(code) {
   return 
-    <div dir="rtl" style="font-family:Arial,sans-serif">
-      <h2>دفتري - تأكيد البريد الإلكتروني</h2>
-      <p>رمز التحقق الخاص بك:</p>
-      <div style="font-size:30px;font-weight:bold;letter-spacing:6px">
-        ${code}
-      </div>
-      <p>صلاحية الرمز عشر دقائق. لا تشاركه مع أحد.</p>
+    <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
+      <h2>دفتري - نظام الأقساط</h2>
+      <p>رمز تأكيد البريد الإلكتروني الخاص بك:</p>
+      <h1 style="letter-spacing:8px">${code}</h1>
+      <p>صلاحية الرمز 10 دقائق فقط.</p>
+      <p>إذا لم تطلب هذا الرمز، تجاهل الرسالة.</p>
     </div>
   ;
 }
@@ -406,103 +425,105 @@ function emailCodeHtml(code) {
 async function createEmailCode(env, user) {
   const code = randomCode();
   const codeHash = await sha256(code);
+  const expiresAt = expiration(CODE_MINUTES);
 
   await env.DB.prepare(
-    DELETE FROM email_codes
-    WHERE user_id = ?
+    "DELETE FROM email_codes WHERE user_id = ?"
   ).bind(user.id).run();
 
   await env.DB.prepare(
-    INSERT INTO email_codes
-      (id, user_id, code_hash, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO email_codes (
+      user_id,
+      code_hash,
+      expires_at
+    ) VALUES (?, ?, ?)
   ).bind(
-    crypto.randomUUID(),
     user.id,
     codeHash,
-    expiration(CODE_MINUTES),
-    new Date().toISOString()
+    expiresAt
   ).run();
 
   await sendEmail(
     env,
     user.email,
-    "رمز التحقق - دفتري",
+    "رمز تأكيد حساب دفتري",
     emailCodeHtml(code)
   );
 }
 
+function getCookie(request, name) {
+  const cookieHeader = request.headers.get("Cookie") || "";
 
-// --------------------------------------------------
-// Session and authentication helpers
-// --------------------------------------------------
+  const cookies = cookieHeader.split(";");
 
+  for (const cookie of cookies) {
+    const separator = cookie.indexOf("=");
+
+    if (separator === -1) continue;
+
+    const key = cookie.slice(0, separator).trim();
+    const value = cookie.slice(separator + 1).trim();
+
+    if (key === name) {
+      return decodeURIComponent(value);
+    }
+  }
+
+  return null;
+}
+// ==========================================
+// PART 3: AUTHENTICATION & USER SESSIONS
+// ==========================================
+
+// إنشاء جلسة تسجيل دخول
 async function createSession(request, env, userId) {
   const token = randomHex(32);
   const tokenHash = await sha256(token);
   const expiresAt = expiration(SESSION_DAYS * 24 * 60);
 
   await env.DB.prepare(
-    INSERT INTO sessions
-      (id, user_id, token_hash, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO sessions (
+      token_hash,
+      user_id,
+      expires_at
+    ) VALUES (?, ?, ?)
   ).bind(
-    crypto.randomUUID(),
-    userId,
     tokenHash,
-    expiresAt,
-    new Date().toISOString()
+    userId,
+    expiresAt
   ).run();
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
+  return json(
+    {
+      success: true,
+      message: "تم تسجيل الدخول بنجاح"
+    },
+    200,
+    request,
+    {
       "Set-Cookie": daftari_session=${token}; ${cookieOptions(
         request,
         SESSION_DAYS * 24 * 60 * 60
-      )},
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": new URL(request.url).origin,
-      "Access-Control-Allow-Credentials": "true",
-      "Vary": "Origin"
+      )}
     }
-  });
+  );
 }
 
-function getCookie(request, name) {
-  const header = request.headers.get("Cookie") || "";
-  for (const part of header.split(";")) {
-    const separator = part.indexOf("=");
-
-    if (separator < 0) continue;
-
-    const key = part.slice(0, separator).trim();
-    const value = part.slice(separator + 1).trim();
-
-    if (key === name) return value;
-  }
-
-  return "";
-}
-
+// التحقق من جلسة المستخدم
 async function requireSession(request, env) {
   const token = getCookie(request, "daftari_session");
 
-  if (!token) {
-    return {
-      error: json({ error: "سجّل الدخول أولاً." }, 401, request)
-    };
-  }
+  if (!token) return null;
 
   const tokenHash = await sha256(token);
 
-  const row = await env.DB.prepare(
+  const result = await env.DB.prepare(
     SELECT
-      s.id AS session_id,
+      s.token_hash,
       s.expires_at,
       u.id,
       u.owner_name,
+      u.father_name,
       u.shop_name,
       u.shop_address,
       u.email,
@@ -513,130 +534,177 @@ async function requireSession(request, env) {
     LIMIT 1
   ).bind(tokenHash).first();
 
-  if (!row || isExpired(row.expires_at)) {
-    if (row) {
-      await env.DB.prepare(
-        DELETE FROM sessions WHERE id = ?
-      ).bind(row.session_id).run();
-    }
+  if (!result) return null;
 
-    return {
-      error: json({ error: "انتهت الجلسة. سجّل الدخول من جديد." }, 401, request)
-    };
+  if (isExpired(result.expires_at)) {
+    await env.DB.prepare(
+      "DELETE FROM sessions WHERE token_hash = ?"
+    ).bind(tokenHash).run();
+
+    return null;
   }
 
-  if (!row.email_verified) {
-    return {
-      error: json({ error: "يجب تأكيد البريد الإلكتروني أولاً." }, 403, request)
-    };
-  }
+  if (result.email_verified !== 1) return null;
 
   return {
-    user: {
-      id: row.id,
-      ownerName: row.owner_name,
-      shopName: row.shop_name,
-      shopAddress: row.shop_address,
-      email: row.email
-    }
+    id: result.id,
+    ownerName: result.owner_name,
+    fatherName: result.father_name,
+    shopName: result.shop_name,
+    shopAddress: result.shop_address,
+    email: result.email
   };
 }
 
-
-// --------------------------------------------------
-// Register
-// --------------------------------------------------
+// ==========================================
+// REGISTER
+// ==========================================
 
 async function register(request, env) {
   const body = await readBody(request);
 
-  const ownerName = cleanText(body.ownerName, 120);
-  const fatherName = cleanText(body.fatherName, 120);
-  const shopName = cleanText(body.shopName, 160);
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
+  }
+
+  const ownerName = cleanText(body.ownerName, 100);
+  const fatherName = cleanText(body.fatherName, 100);
+  const shopName = cleanText(body.shopName, 150);
   const shopAddress = cleanText(body.shopAddress, 250);
   const email = normalizeEmail(body.email);
-  const password = typeof body.password === "string" ? body.password : "";
+  const password = typeof body.password === "string"
+    ? body.password
+    : "";
 
-  if (!ownerName  !fatherName  !shopName  !shopAddress) {
-    return json({ error: "املأ جميع حقول التسجيل." }, 400, request);
+  if (
+    !ownerName 
+    !fatherName 
+    !shopName 
+    !shopAddress 
+    !email 
+    !password
+  ) {
+    return json(
+      { success: false, message: "يرجى ملء جميع الحقول" },
+      400,
+      request
+    );
   }
 
   if (!validEmail(email)) {
-    return json({ error: "البريد الإلكتروني غير صحيح." }, 400, request);
+    return json(
+      { success: false, message: "البريد الإلكتروني غير صحيح" },
+      400,
+      request
+    );
   }
 
-  if (password.length < 6 ||
-  password.length > 128) {
-    return json({
-      error: "كلمة المرور يجب أن تكون بين 6  و128 حرفاً."
-    }, 400, request);
+  if (password.length < 6  password.length > 128) {
+    return json(
+      { success: false, message: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً" },
+      400,
+      request
+    );
   }
 
   const existing = await env.DB.prepare(
-    SELECT id FROM users WHERE email = ? LIMIT 1
+    "SELECT id FROM users WHERE email = ? LIMIT 1"
   ).bind(email).first();
 
   if (existing) {
-    return json({
-      error: "هذا البريد مسجل مسبقاً. جرّب تسجيل الدخول أو استرجاع كلمة المرور."
-    }, 409, request);
+    return json(
+      { success: false, message: "هذا البريد مسجل مسبقاً" },
+      409,
+      request
+    );
   }
 
-  const id = crypto.randomUUID();
-  const passwordHash = await hashPassword(password);
-  const now = new Date().toISOString();
+  const user = {
+    id: randomHex(16),
+    owner_name: ownerName,
+    father_name: fatherName,
+    shop_name: shopName,
+    shop_address: shopAddress,
+    email,
+    password_hash: await hashPassword(password),
+    email_verified: 0,
+    created_at: new Date().toISOString()
+  };
 
   await env.DB.prepare(
-    INSERT INTO users
-      (id, owner_name, father_name, shop_name, shop_address,
-       email, password_hash, email_verified, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+    INSERT INTO users (
+      id,
+      owner_name,
+      father_name,
+      shop_name,
+      shop_address,
+      email,
+      password_hash,
+      email_verified,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   ).bind(
-    id,
-    ownerName,
-    fatherName,
-    shopName,
-    shopAddress,
-    email,
-    passwordHash,
-    now
+    user.id,
+    user.owner_name,
+    user.father_name,
+    user.shop_name,
+    user.shop_address,
+    user.email,
+    user.password_hash,
+    user.email_verified,
+    user.created_at
   ).run();
 
   try {
-    await createEmailCode(env, {
-      id,
-      email
-    });
-  } catch (error) {
-    console.error("Registration email failed:", error);
+    await createEmailCode(env, user);
+    } catch (error) {
+    await env.DB.prepare(
+      "DELETE FROM users WHERE id = ?"
+    ).bind(user.id).run();
 
-    return json({
-      success: true,
-      needsVerification: true,
-      message: "تم إنشاء الحساب، لكن تعذر إرسال رمز التحقق. تحقق من إعدادات البريد ثم اطلب إعادة إرسال الرمز."
-    }, 201, request);
+    throw error;
   }
 
-  return json({
-    success: true,
-    needsVerification: true,
-    message: "تم إنشاء الحساب وإرسال رمز التحقق."
-  }, 201, request);
+  return json(
+    {
+      success: true,
+      message: "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لإكمال التسجيل."
+    },
+    201,
+    request
+  );
 }
 
-
-// --------------------------------------------------
-// Verify email and resend code
-// --------------------------------------------------
+// ==========================================
+// VERIFY EMAIL
+// ==========================================
 
 async function verifyEmail(request, env) {
   const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
+  }
+
   const email = normalizeEmail(body.email);
   const code = cleanText(body.code, 6);
 
   if (!validEmail(email) || !/^\d{6}$/.test(code)) {
-    return json({ error: "أدخل البريد الصحيح ورمز التحقق المكوّن من 6 أرقام." }, 400, request);
+    return json(
+      { success: false, message: "البريد أو رمز التأكيد غير صحيح" },
+      400,
+      request
+    );
   }
+
   const user = await env.DB.prepare(
     SELECT id, email_verified
     FROM users
@@ -645,53 +713,86 @@ async function verifyEmail(request, env) {
   ).bind(email).first();
 
   if (!user) {
-    return json({ error: "تعذر تأكيد البريد. تحقق من البيانات." }, 400, request);
+    return json(
+      { success: false, message: "بيانات التأكيد غير صحيحة" },
+      400,
+      request
+    );
   }
 
-  if (user.email_verified) {
-    return json({ success: true, message: "البريد مؤكد مسبقاً." }, 200, request);
+  if (user.email_verified === 1) {
+    return json(
+      { success: true, message: "البريد الإلكتروني مؤكد مسبقاً" },
+      200,
+      request
+    );
   }
 
-  const row = await env.DB.prepare(
-    SELECT id, code_hash, expires_at
+  const savedCode = await env.DB.prepare(
+    SELECT code_hash, expires_at
     FROM email_codes
     WHERE user_id = ?
-    ORDER BY created_at DESC
     LIMIT 1
   ).bind(user.id).first();
 
-  if (!row || isExpired(row.expires_at)) {
-    return json({ error: "انتهت صلاحية الرمز. اطلب رمزاً جديداً." }, 400, request);
+  if (!savedCode || isExpired(savedCode.expires_at)) {
+    return json(
+      { success: false, message: "انتهت صلاحية الرمز. اطلب رمزاً جديداً." },
+      400,
+      request
+    );
   }
 
-  const codeHash = await sha256(code);
+  const submittedHash = await sha256(code);
 
-  if (codeHash !== row.code_hash) {
-    return json({ error: "رمز التحقق غير صحيح." }, 400, request);
+  if (submittedHash !== savedCode.code_hash) {
+    return json(
+      { success: false, message: "رمز التأكيد غير صحيح" },
+      400,
+      request
+    );
   }
 
   await env.DB.batch([
     env.DB.prepare(
-      UPDATE users SET email_verified = 1 WHERE id = ?
+      "UPDATE users SET email_verified = 1 WHERE id = ?"
     ).bind(user.id),
 
     env.DB.prepare(
-      DELETE FROM email_codes WHERE user_id = ?
+      "DELETE FROM email_codes WHERE user_id = ?"
     ).bind(user.id)
   ]);
 
-  return json({
-    success: true,
-    message: "تم تأكيد البريد الإلكتروني."
-  }, 200, request);
+  return json(
+    { success: true, message: "تم تأكيد البريد الإلكتروني بنجاح" },
+    200,
+    request
+  );
 }
+
+// ==========================================
+// RESEND EMAIL CODE
+// ==========================================
 
 async function resendCode(request, env) {
   const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
+  }
+
   const email = normalizeEmail(body.email);
 
   if (!validEmail(email)) {
-    return json({ error: "أدخل بريداً إلكترونياً صحيحاً." }, 400, request);
+    return json(
+      { success: false, message: "البريد الإلكتروني غير صحيح" },
+      400,
+      request
+    );
   }
 
   const user = await env.DB.prepare(
@@ -701,69 +802,116 @@ async function resendCode(request, env) {
     LIMIT 1
   ).bind(email).first();
 
-  // Avoid disclosing whether an account exists.
-  if (!user  user.email_verified) {
-    return json({
-      success: true,
-      message: "إذا كان الحساب بحاجة إلى التحقق، فستتم معالجة الطلب."
-    }, 200, request);
+  if (!user  user.email_verified === 1) {
+    return json(
+      { success: true, message: "إذا كان الحساب يحتاج تأكيداً فسيتم إرسال الرمز." },
+      200,
+      request
+    );
   }
 
   await createEmailCode(env, user);
 
-  return json({
-    success: true,
-    message: "تم إرسال رمز جديد."
-  }, 200, request);
+  return json(
+    { success: true, message: "تم إرسال رمز جديد إلى بريدك الإلكتروني" },
+    200,
+    request
+  );
 }
 
-
-// --------------------------------------------------
-// Login and logout
-// --------------------------------------------------
+// ==========================================
+// LOGIN
+// ==========================================
 
 async function login(request, env) {
   const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
+  }
+
   const email = normalizeEmail(body.email);
-  const password = typeof body.password === "string" ? body.password : "";
+  const password = typeof body.password === "string"
+    ? body.password
+    : "";
 
   if (!validEmail(email)  !password) {
-    return json({ error: "أدخل البريد الإلكتروني وكلمة المرور." }, 400, request);
+    return json(
+      { success: false, message: "يرجى إدخال البريد وكلمة المرور" },
+      400,
+      request
+    );
   }
 
   const user = await env.DB.prepare(
-    SELECT id, shop_name, email, password_hash, email_verified
+    SELECT
+      id,
+      owner_name,
+      father_name,
+      shop_name,
+      shop_address,
+      email,
+      password_hash,
+      email_verified
     FROM users
     WHERE email = ?
     LIMIT 1
   ).bind(email).first();
-
   if (!user || !(await verifyPassword(password, user.password_hash))) {
-    return json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." }, 401, request);
+    return json(
+      { success: false, message: "البريد أو كلمة المرور غير صحيحة" },
+      401,
+      request
+    );
   }
 
-  if (!user.email_verified) {
-    return json({
-      error: "أكد بريدك الإلكتروني أولاً. استخدم خيار إعادة إرسال الرمز."
-    }, 403, request);
+  if (user.email_verified !== 1) {
+    return json(
+      {
+        success: false,
+        message: "يرجى تأكيد بريدك الإلكتروني أولاً",
+        needsVerification: true
+      },
+      403,
+      request
+    );
   }
 
-  return await createSession(request, env, user.id).then(async response => {
-    // Keep the same session cookie and return shop information.
-    const headers = new Headers(response.headers);
-    return new Response(JSON.stringify({
+  const sessionResponse = await createSession(
+    request,
+    env,
+    user.id
+  );
+
+  const headers = new Headers(sessionResponse.headers);
+
+  return new Response(
+    JSON.stringify({
       success: true,
-      shopName: user.shop_name,
+      message: "تم تسجيل الدخول بنجاح",
       user: {
-        email: user.email,
-        shopName: user.shop_name
+        id: user.id,
+        ownerName: user.owner_name,
+        fatherName: user.father_name,
+        shopName: user.shop_name,
+        shopAddress: user.shop_address,
+        email: user.email
       }
-    }), {
+    }),
+    {
       status: 200,
       headers
-    });
-  });
+    }
+  );
 }
+
+// ==========================================
+// LOGOUT
+// ==========================================
 
 async function logout(request, env) {
   const token = getCookie(request, "daftari_session");
@@ -772,314 +920,538 @@ async function logout(request, env) {
     const tokenHash = await sha256(token);
 
     await env.DB.prepare(
-      DELETE FROM sessions WHERE token_hash = ?
+      "DELETE FROM sessions WHERE token_hash = ?"
     ).bind(tokenHash).run();
   }
 
   return clearCookie(request);
 }
 
-
-// --------------------------------------------------
-// Forgot and reset password
-// --------------------------------------------------
+// ==========================================
+// FORGOT PASSWORD
+// ==========================================
 
 async function forgotPassword(request, env) {
   const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
+  }
+
   const email = normalizeEmail(body.email);
 
   if (!validEmail(email)) {
-    return json({ error: "أدخل بريداً إلكترونياً صحيحاً." }, 400, request);
+    return json(
+      { success: false, message: "البريد الإلكتروني غير صحيح" },
+      400,
+      request
+    );
   }
+
+  const genericMessage = {
+    success: true,
+    message: "إذا كان البريد مسجلاً ومؤكداً فستصلك رسالة استعادة كلمة المرور."
+  };
 
   const user = await env.DB.prepare(
     SELECT id, email
     FROM users
-    WHERE email = ? AND email_verified = 1
+    WHERE email = ?
+      AND email_verified = 1
     LIMIT 1
   ).bind(email).first();
-  // Same response whether the account exists or not.
+
   if (!user) {
-    return json({
-      success: true,
-      message: "إذا كان البريد مسجلاً، ستصلك تعليمات الاسترجاع."
-    }, 200, request);
+    return json(genericMessage, 200, request);
+  }
+
+  if (!env.APP_BASE_URL) {
+    throw new Error("إعداد APP_BASE_URL غير موجود");
   }
 
   const token = randomHex(32);
   const tokenHash = await sha256(token);
+  const expiresAt = expiration(RESET_MINUTES);
 
   await env.DB.prepare(
-    DELETE FROM password_resets WHERE user_id = ?
+    "DELETE FROM reset_tokens WHERE user_id = ?"
   ).bind(user.id).run();
 
   await env.DB.prepare(
-    INSERT INTO password_resets
-      (id, user_id, token_hash, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO reset_tokens (
+      token_hash,
+      user_id,
+      expires_at
+    ) VALUES (?, ?, ?)
   ).bind(
-    crypto.randomUUID(),
-    user.id,
     tokenHash,
-    expiration(RESET_MINUTES),
-    new Date().toISOString()
+    user.id,
+    expiresAt
   ).run();
 
-  const baseUrl = String(env.APP_BASE_URL || "").replace(/\/+$/, "");
-
-  if (!baseUrl) {
-    return json({
-      error: "إعداد APP_BASE_URL مفقود. أضف رابط موقعك في إعدادات Workers."
-    }, 500, request);
-  }
-
+  const baseUrl = env.APP_BASE_URL.replace(/\/+$/, "");
   const resetUrl = ${baseUrl}/?token=${encodeURIComponent(token)};
 
   const html = 
-    <div dir="rtl" style="font-family:Arial,sans-serif">
-      <h2>دفتري - استرجاع كلمة المرور</h2>
-      <p>طلبت تغيير كلمة المرور لحسابك.</p>
+    <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
+      <h2>دفتري - استعادة كلمة المرور</h2>
+      <p>اضغط على الرابط التالي لتغيير كلمة المرور:</p>
       <p>
         <a href="${resetUrl}"
-           style="background:#ffd700;color:#111;padding:12px 18px;
-                  text-decoration:none;border-radius:8px">
+           style="display:inline-block;padding:12px 25px;background:#d4af37;color:#000;text-decoration:none;border-radius:8px">
           تغيير كلمة المرور
         </a>
       </p>
-      <p>الرابط صالح لمدة 30 دقيقة ويستخدم مرة واحدة.</p>
-      <p>إذا لم تطلب التغيير، تجاهل هذه الرسالة.</p>
+      <p>صلاحية الرابط 30 دقيقة فقط.</p>
+      <p>إذا لم تطلب الاستعادة، تجاهل هذه الرسالة.</p>
     </div>
   ;
 
-  try {
-    await sendEmail(env, user.email, "استرجاع كلمة المرور - دفتري", html);
-  } catch (error) {
-    console.error("Password reset email failed:", error);
+  await sendEmail(
+    env,
+    user.email,
+    "استعادة كلمة مرور دفتري",
+    html
+  );
 
-    return json({
-      error: "تعذر إرسال رسالة الاسترجاع. تحقق من إعدادات البريد الإلكتروني."
-    }, 500, request);
-  }
-
-  return json({
-    success: true,
-    message: "إذا كان البريد مسجلاً، ستصلك تعليمات الاسترجاع."
-  }, 200, request);
+  return json(genericMessage, 200, request);
 }
+
+// ==========================================
+// RESET PASSWORD
+// ==========================================
 
 async function resetPassword(request, env) {
   const body = await readBody(request);
 
-  const token = cleanText(body.token, 200);
-  const password = typeof body.password === "string" ? body.password : "";
-
-  if (!token || token.length < 32) {
-    return json({ error: "رابط الاسترجاع غير صالح." }, 400, request);
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
   }
 
-  if (password.length < 6 ||
-  password.length > 128) {
-    return json({
-      error: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً."
-    }, 400, request);
+  const token = cleanText(body.token, 200);
+  const password = typeof body.password === "string"
+    ? body.password
+    : "";
+  if (!token  password.length < 6  password.length > 128) {
+    return json(
+      { success: false, message: "الرابط أو كلمة المرور غير صحيح" },
+      400,
+      request
+    );
   }
 
   const tokenHash = await sha256(token);
 
-  const reset = await env.DB.prepare(
-    SELECT id, user_id, expires_at
-    FROM password_resets
+  const savedToken = await env.DB.prepare(
+    SELECT token_hash, user_id, expires_at
+    FROM reset_tokens
     WHERE token_hash = ?
     LIMIT 1
   ).bind(tokenHash).first();
 
-  if (!reset || isExpired(reset.expires_at)) {
-    return json({
-      error: "انتهت صلاحية رابط الاسترجاع أو تم استخدامه مسبقاً."
-    }, 400, request);
+  if (!savedToken || isExpired(savedToken.expires_at)) {
+    return json(
+      { success: false, message: "انتهت صلاحية رابط الاستعادة أو أنه غير صالح" },
+      400,
+      request
+    );
   }
 
   const passwordHash = await hashPassword(password);
-  const now = new Date().toISOString();
 
   await env.DB.batch([
     env.DB.prepare(
-      UPDATE users SET password_hash = ? WHERE id = ?
-    ).bind(passwordHash, reset.user_id),
+      "UPDATE users SET password_hash = ? WHERE id = ?"
+    ).bind(passwordHash, savedToken.user_id),
 
     env.DB.prepare(
-      DELETE FROM password_resets WHERE user_id = ?
-    ).bind(reset.user_id),
+      "DELETE FROM reset_tokens WHERE user_id = ?"
+    ).bind(savedToken.user_id),
 
     env.DB.prepare(
-      DELETE FROM sessions WHERE user_id = ?
-    ).bind(reset.user_id)
+      "DELETE FROM sessions WHERE user_id = ?"
+    ).bind(savedToken.user_id)
   ]);
 
-  return json({
-    success: true,
-    message: "تم تغيير كلمة المرور. سجّل الدخول من جديد."
-  }, 200, request);
+  return json(
+    { success: true, message: "تم تغيير كلمة المرور بنجاح. سجل الدخول من جديد." },
+    200,
+    request
+  );
 }
+// ==========================================
+// PART 4: CUSTOMERS & PAYMENTS
+// ==========================================
 
+// ==========================================
+// GET CUSTOMERS LIST
+// ==========================================
 
-// --------------------------------------------------
-// Customers
-// --------------------------------------------------
-
-async function createCustomer(request, env, user) {
-  const body = await readBody(request);
-
-  const name = cleanText(body.name, 160);
-  const phone = cleanText(body.phone, 40);
-  const address = cleanText(body.address, 250);
-  const purchaseName = cleanText(body.purchaseName, 200);
-
-  const total = body.total;
-  const paid = body.paid;
-  const monthly = body.monthly;
-
-  if (!name  !purchaseName) {
-    return json({
-      error: "اسم الزبون واسم المشتريات حقول مطلوبة."
-    }, 400, request);
-  }
-
-  if (!validAmount(total) 
-      !validAmount(paid, true) 
-      paid > total 
-      !validAmount(monthly, true)) {
-    return json({
-      error: "تحقق من المبالغ. يجب ألا يكون المدفوع أكبر من المبلغ الكلي."
-    }, 400, request);
-  }
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-
-  await env.DB.prepare(
-    INSERT INTO customers
-      (id, owner_id, name, phone, address, purchase_name,
-       total, paid, monthly, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  ).bind(
-    id,
-    user.id,
-    name,
-    phone,
-    address,
-    purchaseName,
-    total,
-    paid,
-    monthly,
-    now,
-    now
-  ).run();
-
-  await env.DB.prepare(
-    INSERT INTO customer_history
-      (id, owner_id, customer_id, description, amount, date, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  ).bind(
-    crypto.randomUUID(),
-    user.id,
-    id,
-    "مشتريات: " + purchaseName,
-    total,
-    now.slice(0, 10),
-    now
-  ).run();
-
-  if (paid > 0) {
-    await env.DB.prepare(
-      INSERT INTO customer_history
-        (id, owner_id, customer_id, description, amount, date, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    ).bind(
-      crypto.randomUUID(),
-      user.id,
-      id,
-      "دفعة أولية",
-      -paid,
-      now.slice(0, 10),
-      now
-    ).run();
-  }
-
-  return json({
-    success: true,
-    id,
-    message: "تم حفظ الزبون بنجاح."
-  }, 201, request);
-}
-
-async function getCustomer(env, ownerId, customerId) {
-  return await env.DB.prepare(
+async function listCustomers(request, env, user) {
+  const result = await env.DB.prepare(
     SELECT
       id,
       name,
       phone,
       address,
-      purchase_name AS purchaseName,
+      purchase_name,
       total,
       paid,
       monthly,
       (total - paid) AS remaining,
-      created_at AS createdAt
+      created_at
     FROM customers
-    WHERE id = ? AND owner_id = ?
-    LIMIT 1
-  ).bind(customerId, ownerId).first();
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  ).bind(user.id).all();
+
+  return json(
+    {
+      success: true,
+      customers: result.results  []
+    },
+    200,
+    request
+  );
 }
 
-async function addPayment(request, env, ownerId, customerId) {
-  const body = await readBody(request);
-  const amount = body.amount;
+// ==========================================
+// CREATE CUSTOMER
+// ==========================================
 
-  if (!validAmount(amount)) {
-    return json({ error: "أدخل مبلغ دفعة صحيحاً." }, 400, request);
+async function createCustomer(request, env, user) {
+  const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
   }
 
-  const customer = await getCustomer(env, ownerId, customerId);
+  const name = cleanText(body.name, 150);
+  const phone = cleanText(body.phone, 30);
+  const address = cleanText(body.address, 250);
+  const purchaseName = cleanText(body.purchaseName, 200);
+
+  const total = body.total;
+  const paid = body.paid === undefined ? 0 : body.paid;
+  const monthly = body.monthly === undefined ? 0 : body.monthly;
+
+  if (!name  !purchaseName) {
+    return json(
+      { success: false, message: "يرجى إدخال اسم الزبون واسم المادة" },
+      400,
+      request
+    );
+  }
+
+  if (
+    !validAmount(total) 
+    !validAmount(paid, true) 
+    !validAmount(monthly, true) ||
+    paid > total
+  ) {
+    return json(
+      { success: false, message: "المبالغ المدخلة غير صحيحة" },
+      400,
+      request
+    );
+  }
+
+  const customerId = randomHex(16);
+  const now = new Date().toISOString();
+
+  const statements = [
+    env.DB.prepare(
+      INSERT INTO customers (
+        id,
+        user_id,
+        name,
+        phone,
+        address,
+        purchase_name,
+        total,
+        paid,
+        monthly,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ).bind(
+      customerId,
+      user.id,
+      name,
+      phone,
+      address,
+      purchaseName,
+      total,
+      paid,
+      monthly,
+      now
+    ),
+
+    env.DB.prepare(
+      INSERT INTO payment_history (
+        id,
+        customer_id,
+        user_id,
+        description,
+        amount,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    ).bind(
+      randomHex(16),
+      customerId,
+      user.id,
+      إضافة مشتريات: ${purchaseName},
+      total,
+      now
+    )
+  ];
+
+  if (paid > 0) {
+    statements.push(
+      env.DB.prepare(
+        INSERT INTO payment_history (
+          id,
+          customer_id,
+          user_id,
+          description,
+          amount,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      ).bind(
+        randomHex(16),
+        customerId,
+        user.id,
+        "دفعة أولية",
+        -paid,
+        now
+      )
+    );
+  }
+
+  await env.DB.batch(statements);
+
+  return json(
+    {
+      success: true,
+      message: "تمت إضافة الزبون بنجاح",
+      customer: {
+        id: customerId,
+        name,
+        phone,
+        address,
+        purchase_name: purchaseName,
+        total,
+        paid,
+        monthly,
+        remaining: total - paid,
+        created_at: now
+      }
+    },
+    201,
+    request
+  );
+}
+
+// ==========================================
+// GET CUSTOMER DETAILS & PAYMENT HISTORY
+// ==========================================
+
+async function getCustomerDetails(request, env, user, customerId) {
+  const customer = await env.DB.prepare(
+    SELECT
+      id,
+      name,
+      phone,
+      address,
+      purchase_name,
+      total,
+      paid,
+      monthly,
+      (total - paid) AS remaining,
+      created_at
+    FROM customers
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  ).bind(
+    customerId,
+    user.id
+  ).first();
 
   if (!customer) {
-    return json({ error: "الزبون غير موجود." }, 404, request);
+    return json(
+      { success: false, message: "الزبون غير موجود" },
+      404,
+      request
+    );
+  }
+ const history = await env.DB.prepare(
+    SELECT
+      id,
+      description,
+      amount,
+      created_at AS date
+    FROM payment_history
+    WHERE customer_id = ? AND user_id = ?
+    ORDER BY created_at DESC
+  ).bind(
+    customerId,
+    user.id
+  ).all();
+
+  return json(
+    {
+      success: true,
+      customer,
+      history: history.results  []
+    },
+    200,
+    request
+  );
+}
+
+// ==========================================
+// ADD CUSTOMER PAYMENT
+// ==========================================
+
+async function addPayment(request, env, user, customerId) {
+  const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      { success: false, message: "بيانات الطلب غير صحيحة" },
+      400,
+      request
+    );
   }
 
-  const remaining = Number(customer.total) - Number(customer.paid);
+  const amount = body.amount;
+  const description = cleanText(
+    body.description  "تسديد قسط",
+    200
+  );
+
+  if (!validAmount(amount)) {
+    return json(
+      { success: false, message: "مبلغ الدفعة غير صحيح" },
+      400,
+      request
+    );
+  }
+
+  const customer = await env.DB.prepare(
+    SELECT id, total, paid
+    FROM customers
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  ).bind(
+    customerId,
+    user.id
+  ).first();
+
+  if (!customer) {
+    return json(
+      { success: false, message: "الزبون غير موجود" },
+      404,
+      request
+    );
+  }
+
+  const remaining = customer.total - customer.paid;
 
   if (amount > remaining) {
-    return json({
-      error: "مبلغ الدفعة أكبر من المبلغ المتبقي على الزبون."
-    }, 400, request);
+    return json(
+      {
+        success: false,
+        message: "مبلغ الدفعة أكبر من المبلغ المتبقي",
+        remaining
+      },
+      400,
+      request
+    );
+  }
+
+  const update = await env.DB.prepare(
+    UPDATE customers
+    SET paid = paid + ?
+    WHERE id = ?
+      AND user_id = ?
+      AND paid + ? <= total
+  ).bind(
+    amount,
+    customerId,
+    user.id,
+    amount
+  ).run();
+
+  if (!update.meta || update.meta.changes !== 1) {
+    return json(
+      {
+        success: false,
+        message: "تعذر تسجيل الدفعة. حدّث الصفحة وحاول مرة أخرى."
+      },
+      409,
+      request
+    );
   }
 
   const now = new Date().toISOString();
 
-  // Both updates are performed as one D1 batch.
-  await env.DB.batch([
-    env.DB.prepare(
-      UPDATE customers
-      SET paid = paid + ?, updated_at = ?
-      WHERE id = ? AND owner_id = ?
-    ).bind(amount, now, customerId, ownerId),
+  await env.DB.prepare(
+    INSERT INTO payment_history (
+      id,
+      customer_id,
+      user_id,
+      description,
+      amount,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  ).bind(
+    randomHex(16),
+    customerId,
+    user.id,
+    description,
+    -amount,
+    now
+  ).run();
 
-    env.DB.prepare(
-      INSERT INTO customer_history
-        (id, owner_id, customer_id, description, amount, date, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    ).bind(
-      crypto.randomUUID(),
-      ownerId,
-      customerId,
-      "دفعة مستلمة",
-      -amount,
-      now.slice(0, 10),
-      now
-    )
-  ]);
+  const updatedCustomer = await env.DB.prepare(
+    SELECT
+      id,
+      name,
+      total,
+      paid,
+      (total - paid) AS remaining
+    FROM customers
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  ).bind(
+    customerId,
+    user.id
+  ).first();
 
-  return json({
-    success: true,
-    message: "تم تسجيل الدفعة بنجاح."
-  }, 200, request);
+  return json(
+    {
+      success: true,
+      message: "تم تسجيل الدفعة بنجاح",
+      customer: updatedCustomer
+    },
+    200,
+    request
+  );
 }
+
+// ==========================================
+// END OF DAFTARI WORKER CODE
+// ==========================================
+
