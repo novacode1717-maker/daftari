@@ -376,11 +376,74 @@ function expiration(minutes) {
 function isExpired(value) {
   return !value || Date.parse(value) <= Date.now();
 }
+  <@1500535464866873637> // إرسال البريد الإلكتروني عبر Resend
+async function sendEmail(env, to, subject, html) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: env.MAIL_FROM,
+      to: [to],
+      subject,
+      html
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("فشل إرسال البريد الإلكتروني");
+  }
+
+  return await response.json();
+}
+
+// تصميم رسالة رمز التأكيد
+function emailCodeHtml(code) {
+  return `
+    <div dir="rtl" style="font-family:Arial;text-align:center;padding:25px">
+      <h2>مرحباً بك في دفتري</h2>
+      <p>رمز تأكيد حسابك هو:</p>
+      <h1 style="letter-spacing:8px">${code}</h1>
+      <p>صلاحية الرمز ${CODE_MINUTES} دقائق.</p>
+    </div>
+  `;
+}
+
+// إنشاء رمز التأكيد وإرساله
+async function createEmailCode(env, user) {
+  const random = new Uint32Array(1);
+  crypto.getRandomValues(random);
+
+  const code = String(random[0] % 1000000).padStart(6, "0");
+  const codeHash = await sha256(code);
+  const expiresAt = new Date(
+    Date.now() + CODE_MINUTES * 60 * 1000
+  ).toISOString();
+
+  await env.DB.prepare(`
+    INSERT INTO email_codes (
+      user_id,
+      code_hash,
+      expires_at
+    ) VALUES (?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      code_hash = excluded.code_hash,
+      expires_at = excluded.expires_at
+  `).bind(
+    user.id,
+    codeHash,
+    expiresAt
+  ).run();
+
   await sendEmail(
     env,
     user.email,
     "رمز تأكيد حساب دفتري",
     emailCodeHtml(code)
+  );
+}
   );
 }
 
