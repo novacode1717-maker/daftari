@@ -93,7 +93,7 @@ export default {
             created_at AS createdAt
           FROM customers
           WHERE user_id = ?
-          ORDER BY created_at DESC'
+          ORDER BY created_at DESC`
         ).bind(session.user.id).all();
 
         return json({
@@ -125,27 +125,7 @@ export default {
         if (session.error) return session.error;
 return await getCustomerDetails(request, env, session.user, customerMatch[1]);
 
-if (!customer) {
-  return json({
-    error: "الزبون غير موجود."
-  }, 404, request);
-}
 
-        const history = await env.DB.prepare(
-          SELECT
-            id,
-            description,
-            amount,
-            created_at AS date
-          FROM payment_history
-          WHERE user_id = ? AND customer_id = ?
-          ORDER BY created_at DESC'
-        ).bind(session.user.id, customer.id).all();
-
-        return json({
-          ...customer,
-          history: history.results || []
-        }, 200, request);
       }
 
       // Customer payment
@@ -219,7 +199,7 @@ function clearCookie(request) {
     200,
     request,
     {
-      "Set-Cookie": `daftari_session=; ${cookieOptions(request, 0)},
+      "Set-Cookie": `daftari_session=; ${cookieOptions(request, 0)}`
     }
   );
 }
@@ -376,7 +356,7 @@ function expiration(minutes) {
 function isExpired(value) {
   return !value || Date.parse(value) <= Date.now();
 }
-  <@1500535464866873637> // إرسال البريد الإلكتروني عبر Resend
+// إرسال البريد الإلكتروني عبر Resend
 async function sendEmail(env, to, subject, html) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -442,8 +422,6 @@ async function createEmailCode(env, user) {
     user.email,
     "رمز تأكيد حساب دفتري",
     emailCodeHtml(code)
-  );
-}
   );
 }
 
@@ -568,9 +546,6 @@ if (!result) {
     email: result.email
   }
 };
-}
-function isExpired(value) {
-  return !value || Date.parse(value) <= Date.now();
 }
 // ==========================================
 // REGISTER
