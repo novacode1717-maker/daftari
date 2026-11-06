@@ -80,7 +80,7 @@ export default {
         if (session.error) return session.error;
 
         const result = await env.DB.prepare(
-          'SELECT
+          `SELECT
             id,
             name,
             phone,
@@ -123,14 +123,7 @@ export default {
         const session = await requireSession(request, env);
 
         if (session.error) return session.error;
-
-       const customer = await 
-     getCustomerDetails(
-  request,
-  env,
-  session.user,
-  customerMatch[1]
-);
+return await getCustomerDetails(request, env, session.user, customerMatch[1]);
 
 if (!customer) {
   return json({
@@ -545,8 +538,15 @@ if (!result) {
 };
   }
 
-  if (result.email_verified !== 1) return null;
-
+ if (result.email_verified !== 1) {
+  return {
+    error: json(
+      { error: "يرجى تأكيد البريد الإلكتروني أولاً." },
+      403,
+      request
+    )
+  };
+}
  return {
   user: {
     id: result.id,
@@ -557,7 +557,7 @@ if (!result) {
     email: result.email
   }
 };
-
+}
 // ==========================================
 // REGISTER
 // ==========================================
@@ -1298,14 +1298,14 @@ async function getCustomerDetails(request, env, user, customerId) {
     );
   }
  const history = await env.DB.prepare(
-    'SELECT
+    `SELECT
       id,
       description,
       amount,
       created_at AS date
     FROM payment_history
     WHERE customer_id = ? AND user_id = ?
-    ORDER BY created_at DESC
+    ORDER BY created_at DESC`
   ).bind(
     customerId,
     user.id
@@ -1352,10 +1352,10 @@ async function addPayment(request, env, user, customerId) {
   }
 
   const customer = await env.DB.prepare(
-    'SELECT id, total, paid
+    `SELECT id, total, paid
     FROM customers
     WHERE id = ? AND user_id = ?
-    LIMIT 1'
+    LIMIT 1`
   ).bind(
     customerId,
     user.id
