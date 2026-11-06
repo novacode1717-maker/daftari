@@ -160,7 +160,7 @@ if (!customer) {
         return await addPayment(
           request,
           env,
-          session.user.id,
+          session.user,
           paymentMatch[1]
         );
       }
@@ -210,8 +210,7 @@ function cookieOptions(request, maxAge) {
     ? "; Secure"
     : "";
 
-  return `HttpOnly; Path=/; SameSite=Lax; 
-          Max-Age=${maxAge}${secure}`;
+  return `HttpOnly; Path=/; SameSite=Lax;Max-Age=${maxAge}${secure}`;
 }
 
 function clearCookie(request) {
@@ -220,8 +219,7 @@ function clearCookie(request) {
     200,
     request,
     {
-      "Set-Cookie": `daftari_session=; $
-  {cookieOptions(request, 0)},
+      "Set-Cookie": `daftari_session=; ${cookieOptions(request, 0)},
     }
   );
 }
@@ -230,7 +228,7 @@ async function readBody(request) {
   try {
     const body = await request.json();
 
-    if (!body  typeof body !== "object" ||
+    if (!body || typeof body !== "object" ||
       Array.isArray(body)) {
       return null;
     }
@@ -312,15 +310,14 @@ async function hashPassword(password) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  return `pbkdf2$${PASSWORD_ITERATIONS}$$
-          {salt}$${hash}`;
+  return `pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash}`;
 }
 
 async function verifyPassword(password, stored) {
   try {
     const parts = stored.split("$");
 
-    if (parts.length !== 4  parts[0] !== || "pbkdf2") {
+    if (parts.length !== 4 || parts[0] !==  "pbkdf2") {
       return false;
     }
 
@@ -376,58 +373,9 @@ function expiration(minutes) {
   ).toISOString();
 }
 
-function emailCodeHtml(code) {
-  return `
-    <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
-      <h2>دفتري - نظام الأقساط</h2>
-      <p>رمز تأكيد البريد الإلكتروني الخاص بك:</p>
-      <h1 style="letter-spacing:8px">${code}</h1>
-      <p>صلاحية الرمز 10 دقائق فقط.</p>
-      <p>إذا لم تطلب هذا الرمز، تجاهل الرسالة.</p>
-    </div>
-  `;
+function isExpired(value) {
+  return !value || Date.parse(value) <= Date.now();
 }
-
-  if (!response.ok) {
-    throw new Error("فشل إرسال البريد الإلكتروني");
-  }
-
-  return true;
-}
-
-function emailCodeHtml(code) {
-  return `
-    <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
-      <h2>دفتري - نظام الأقساط</h2>
-      <p>رمز تأكيد البريد الإلكتروني الخاص بك:</p>
-      <h1 style="letter-spacing:8px">${code}</h1>
-      <p>صلاحية الرمز 10 دقائق فقط.</p>
-      <p>إذا لم تطلب هذا الرمز، تجاهل الرسالة.</p>
-    </div>
-  ;
-}
-
-async function createEmailCode(env, user) {
-  const code = randomCode();
-  const codeHash = await sha256(code);
-  const expiresAt = expiration(CODE_MINUTES);
-
-  await env.DB.prepare(
-    "DELETE FROM email_codes WHERE user_id = ?"
-  ).bind(user.id).run();
-
-  await env.DB.prepare(
-    INSERT INTO email_codes (
-      user_id,
-      code_hash,
-      expires_at
-    ) VALUES (?, ?, ?)
-  ).bind(
-    user.id,
-    codeHash,
-    expiresAt
-  ).run();
-
   await sendEmail(
     env,
     user.email,
@@ -557,6 +505,9 @@ if (!result) {
     email: result.email
   }
 };
+}
+function isExpired(value) {
+  return !value || Date.parse(value) <= Date.now();
 }
 // ==========================================
 // REGISTER
