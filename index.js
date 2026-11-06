@@ -217,7 +217,8 @@ function cookieOptions(request, maxAge) {
     ? "; Secure"
     : "";
 
-  return HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure};
+  return `HttpOnly; Path=/; SameSite=Lax; 
+          Max-Age=${maxAge}${secure}`;
 }
 
 function clearCookie(request) {
@@ -226,7 +227,8 @@ function clearCookie(request) {
     200,
     request,
     {
-      "Set-Cookie": daftari_session=; ${cookieOptions(request, 0)}
+      "Set-Cookie": `daftari_session=; $
+  {cookieOptions(request, 0)},
     }
   );
 }
@@ -317,14 +319,15 @@ async function hashPassword(password) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  return pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash};
+  return `pbkdf2$${PASSWORD_ITERATIONS}$$
+          {salt}$${hash}`;
 }
 
 async function verifyPassword(password, stored) {
   try {
     const parts = stored.split("$");
 
-    if (parts.length !== 4  parts[0] !== "pbkdf2") {
+    if (parts.length !== 4  parts[0] !== || "pbkdf2") {
       return false;
     }
 
@@ -333,14 +336,14 @@ async function verifyPassword(password, stored) {
     const originalHash = parts[3];
 
     if (
-      !Number.isInteger(iterations) 
-      iterations < 100000 
-      iterations > 1000000 
-      !/^[a-f0-9]{32}$/.test(salt) 
-      !/^[a-f0-9]{64}$/.test(originalHash)
-    ) {
-      return false;
-    }
+  !Number.isInteger(iterations) ||
+  iterations < 100000 ||
+  iterations > 1000000 ||
+  !/^[a-f0-9]{32}$/.test(salt) ||
+  !/^[a-f0-9]{64}$/.test(originalHash)
+) {
+  return false;
+}
 
     const key = await crypto.subtle.importKey(
       "raw",
@@ -380,31 +383,17 @@ function expiration(minutes) {
   ).toISOString();
 }
 
-function isExpired(value) {
-  return !value  Date.parse(value) <= Date.now();
+function emailCodeHtml(code) {
+  return `
+    <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
+      <h2>دفتري - نظام الأقساط</h2>
+      <p>رمز تأكيد البريد الإلكتروني الخاص بك:</p>
+      <h1 style="letter-spacing:8px">${code}</h1>
+      <p>صلاحية الرمز 10 دقائق فقط.</p>
+      <p>إذا لم تطلب هذا الرمز، تجاهل الرسالة.</p>
+    </div>
+  `;
 }
-
-async function sendEmail(env, to, subject, html) {
-  if (!env.RESEND_API_KEY || !env.MAIL_FROM) {
-    throw new Error("إعدادات البريد الإلكتروني غير مكتملة");
-  }
-
-  const response = await fetch(
-    "https://api.resend.com/emails",
-    {
-      method: "POST",
-      headers: {
-        "Authorization": Bearer ${env.RESEND_API_KEY},
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: env.MAIL_FROM,
-        to: [to],
-        subject,
-        html
-      })
-    }
-  );
 
   if (!response.ok) {
     throw new Error("فشل إرسال البريد الإلكتروني");
@@ -414,7 +403,7 @@ async function sendEmail(env, to, subject, html) {
 }
 
 function emailCodeHtml(code) {
-  return 
+  return `
     <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
       <h2>دفتري - نظام الأقساط</h2>
       <p>رمز تأكيد البريد الإلكتروني الخاص بك:</p>
