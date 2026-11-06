@@ -540,15 +540,20 @@ if (!token) {
     WHERE s.token_hash = ?
     LIMIT 1'
   ).bind(tokenHash).first();
-
-  if (!result) return null;
+if (!result) {
+  return {
+    error: json({ error: "الجلسة غير صالحة، يرجى تسجيل الدخول." }, 401, request)
+  };
+}
 
   if (isExpired(result.expires_at)) {
     await env.DB.prepare(
       "DELETE FROM sessions WHERE token_hash = ?"
     ).bind(tokenHash).run();
 
-    return null;
+    return {
+  error: json({ error: "انتهت الجلسة، يرجى تسجيل الدخول مجدداً." }, 401, request)
+};
   }
 
   if (result.email_verified !== 1) return null;
