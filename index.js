@@ -80,7 +80,7 @@ export default {
         if (session.error) return session.error;
 
         const result = await env.DB.prepare(
-          SELECT
+          'SELECT
             id,
             name,
             phone,
@@ -93,7 +93,7 @@ export default {
             created_at AS createdAt
           FROM customers
           WHERE user_id = ?
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC'
         ).bind(session.user.id).all();
 
         return json({
@@ -124,17 +124,19 @@ export default {
 
         if (session.error) return session.error;
 
-        const customer = await getCustomer(
-          env,
-          session.user.id,
-          customerMatch[1]
-        );
+       const customer = await 
+     getCustomerDetails(
+  request,
+  env,
+  session.user,
+  customerMatch[1]
+);
 
-        if (!customer) {
-          return json({
-            error: "الزبون غير موجود."
-          }, 404, request);
-        }
+if (!customer) {
+  return json({
+    error: "الزبون غير موجود."
+  }, 404, request);
+}
 
         const history = await env.DB.prepare(
           SELECT
@@ -233,7 +235,8 @@ async function readBody(request) {
   try {
     const body = await request.json();
 
-    if (!body  typeof body !== "object"  Array.isArray(body)) {
+    if (!body  typeof body !== "object" ||
+      Array.isArray(body)) {
       return null;
     }
 
@@ -513,12 +516,16 @@ async function createSession(request, env, userId) {
 async function requireSession(request, env) {
   const token = getCookie(request, "daftari_session");
 
-  if (!token) return null;
+if (!token) {
+  return {
+    error: json({ error: "يرجى تسجيل الدخول." }, 401, request)
+  };
+}
 
   const tokenHash = await sha256(token);
 
   const result = await env.DB.prepare(
-    SELECT
+    'SELECT
       s.token_hash,
       s.expires_at,
       u.id,
@@ -531,7 +538,7 @@ async function requireSession(request, env) {
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ?
-    LIMIT 1
+    LIMIT 1'
   ).bind(tokenHash).first();
 
   if (!result) return null;
@@ -546,15 +553,16 @@ async function requireSession(request, env) {
 
   if (result.email_verified !== 1) return null;
 
-  return {
+ return {
+  user: {
     id: result.id,
     ownerName: result.owner_name,
     fatherName: result.father_name,
     shopName: result.shop_name,
     shopAddress: result.shop_address,
     email: result.email
-  };
-}
+  }
+};
 
 // ==========================================
 // REGISTER
