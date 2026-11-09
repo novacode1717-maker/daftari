@@ -455,13 +455,13 @@ async function createSession(request, env, userId) {
   const tokenHash = await sha256(token);
   const expiresAt = expiration(SESSION_DAYS * 24 * 60);
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO sessions (
       token_hash,
       user_id,
       expires_at
     ) VALUES (?, ?, ?)
-  ).bind(
+  `).bind(
     tokenHash,
     userId,
     expiresAt
@@ -475,7 +475,7 @@ async function createSession(request, env, userId) {
     200,
     request,
     {
-      "Set-Cookie": daftari_session=${token}; ${cookieOptions(
+      "Set-Cookie": `daftari_session=${token}; ${cookieOptions(
         request,
         SESSION_DAYS * 24 * 60 * 60
       )}
@@ -496,7 +496,7 @@ if (!token) {
   const tokenHash = await sha256(token);
 
   const result = await env.DB.prepare(
-    'SELECT
+  `SELECT
       s.token_hash,
       s.expires_at,
       u.id,
@@ -509,7 +509,7 @@ if (!token) {
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ?
-    LIMIT 1'
+    LIMIT 1`
   ).bind(tokenHash).first();
 if (!result) {
   return {
