@@ -828,7 +828,7 @@ async function login(request, env) {
     ? body.password
     : "";
 
-  if (!validEmail(email)  !password) {
+  if (!validEmail(email) || !password) {
     return json(
       { success: false, message: "يرجى إدخال البريد وكلمة المرور" },
       400,
@@ -836,7 +836,7 @@ async function login(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT
       id,
       owner_name,
@@ -849,7 +849,7 @@ async function login(request, env) {
     FROM users
     WHERE email = ?
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     return json(
       { success: false, message: "البريد أو كلمة المرور غير صحيحة" },
