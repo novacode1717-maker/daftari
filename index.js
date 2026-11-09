@@ -478,7 +478,7 @@ async function createSession(request, env, userId) {
       "Set-Cookie": `daftari_session=${token}; ${cookieOptions(
         request,
         SESSION_DAYS * 24 * 60 * 60
-      )}
+      )}`
     }
   );
 }
@@ -572,11 +572,11 @@ async function register(request, env) {
     : "";
 
   if (
-    !ownerName 
-    !fatherName 
-    !shopName 
-    !shopAddress 
-    !email 
+    !ownerName ||
+    !fatherName ||
+    !shopName ||
+    !shopAddress ||
+    !email ||
     !password
   ) {
     return json(
@@ -594,7 +594,7 @@ async function register(request, env) {
     );
   }
 
-  if (password.length < 6  password.length > 128) {
+  if (password.length < 6 || password.length > 128) {
     return json(
       { success: false, message: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً" },
       400,
@@ -626,7 +626,7 @@ async function register(request, env) {
     created_at: new Date().toISOString()
   };
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO users (
       id,
       owner_name,
@@ -638,7 +638,7 @@ async function register(request, env) {
       email_verified,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  ).bind(
+  `).bind(
     user.id,
     user.owner_name,
     user.father_name,
