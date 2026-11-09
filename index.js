@@ -784,7 +784,7 @@ async function resendCode(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT id, email, email_verified
     FROM users
     WHERE email = ?
