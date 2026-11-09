@@ -696,12 +696,11 @@ async function verifyEmail(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
-    SELECT id, email_verified
-    FROM users
+  const user = await env.DB.prepare(`
+    SELECT id, email_verified FROM users
     WHERE email = ?
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
 
   if (!user) {
     return json(
@@ -719,12 +718,11 @@ async function verifyEmail(request, env) {
     );
   }
 
-  const savedCode = await env.DB.prepare(
-    SELECT code_hash, expires_at
-    FROM email_codes
+  const savedCode = await env.DB.prepare(`
+    SELECT code_hash, expires_at FROM email_codes
     WHERE user_id = ?
     LIMIT 1
-  ).bind(user.id).first();
+  `).bind(user.id).first();
 
   if (!savedCode || isExpired(savedCode.expires_at)) {
     return json(
@@ -733,7 +731,7 @@ async function verifyEmail(request, env) {
       request
     );
   }
-
+  
   const submittedHash = await sha256(code);
 
   if (submittedHash !== savedCode.code_hash) {
