@@ -1362,12 +1362,12 @@ async function addPayment(request, env, user, customerId) {
     );
   }
 
-  const customer = await env.DB.prepare(
+  const customer = await env.DB.prepare(`
     SELECT id, total, paid
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).first();
@@ -1401,14 +1401,14 @@ async function addPayment(request, env, user, customerId) {
   const newPaid = customer.paid + amount;
 
   const results = await env.DB.batch([
-    env.DB.prepare(
+    env.DB.prepare(`
       UPDATE customers
       SET paid = paid + ?
       WHERE id = ?
         AND user_id = ?
         AND paid = ?
         AND paid + ? <= total
-    ).bind(
+    `).bind(
       amount,
       customerId,
       user.id,
@@ -1416,7 +1416,7 @@ async function addPayment(request, env, user, customerId) {
       amount
     ),
 
-    env.DB.prepare(
+    env.DB.prepare(`
       INSERT INTO payment_history (
         id,
         customer_id,
@@ -1433,7 +1433,7 @@ async function addPayment(request, env, user, customerId) {
           AND user_id = ?
           AND paid = ?
       )
-    ).bind(
+    `).bind(
       randomHex(16),
       customerId,
       user.id,
@@ -1447,10 +1447,10 @@ async function addPayment(request, env, user, customerId) {
   ]);
 
   if (
-    !results[0].meta 
-    results[0].meta.changes !== 1 
+    !results[0].meta ||
+    results[0].meta.changes !== 1 ||
     !results[1].meta ||
-    results[1].meta.changes !== 1
+    results[1].meta.changes !== 1 ||
   ) {
     return json(
       {
@@ -1462,7 +1462,7 @@ async function addPayment(request, env, user, customerId) {
     );
   }
 
-  const updatedCustomer = await env.DB.prepare(
+  const updatedCustomer = await env.DB.prepare(`
     SELECT
       id,
       name,
@@ -1472,7 +1472,7 @@ async function addPayment(request, env, user, customerId) {
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).first();
