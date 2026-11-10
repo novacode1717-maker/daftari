@@ -80,7 +80,7 @@ export default {
         if (session.error) return session.error;
 
         const result = await env.DB.prepare(
-          SELECT
+          `SELECT
             id,
             name,
             phone,
@@ -93,7 +93,7 @@ export default {
             created_at AS createdAt
           FROM customers
           WHERE user_id = ?
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC`
         ).bind(session.user.id).all();
 
         return json({
@@ -162,6 +162,7 @@ export default {
     }
   }
 };
+
 // ==========================================
 // PART 2: HELPER FUNCTIONS & SECURITY
 // ==========================================
@@ -194,7 +195,7 @@ function cookieOptions(request, maxAge) {
     ? "; Secure"
     : "";
 
-  return HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure};
+  return `HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
 function clearCookie(request) {
@@ -203,7 +204,7 @@ function clearCookie(request) {
     200,
     request,
     {
-      "Set-Cookie": daftari_session=; ${cookieOptions(request, 0)}
+      "Set-Cookie": `daftari_session=; ${cookieOptions(request, 0)}`
     }
   );
 }
@@ -212,7 +213,7 @@ async function readBody(request) {
   try {
     const body = await request.json();
 
-    if (!body  typeof body !== "object" 
+    if (!body || typeof body !== "object" ||
       Array.isArray(body)) {
       return null;
     }
@@ -294,14 +295,14 @@ async function hashPassword(password) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  return pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash};
+  return `pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash}`;
 }
 
 async function verifyPassword(password, stored) {
   try {
     const parts = stored.split("$");
 
-    if (parts.length !== 4  parts[0] !== "pbkdf2") {
+    if (parts.length !== 4 || parts[0] !== "pbkdf2") {
       return false;
     }
 
@@ -310,10 +311,10 @@ async function verifyPassword(password, stored) {
     const originalHash = parts[3];
 
     if (
-      !Number.isInteger(iterations) 
-      iterations < 100000 
-      iterations > 1000000 
-      !/^[a-f0-9]{32}$/.test(salt) 
+      !Number.isInteger(iterations) ||
+      iterations < 100000 ||
+      iterations > 1000000 ||
+      !/^[a-f0-9]{32}$/.test(salt) ||
       !/^[a-f0-9]{64}$/.test(originalHash)
     ) {
       return false;
@@ -341,7 +342,6 @@ async function verifyPassword(password, stored) {
     );
 
     const newHash = Array.from(new Uint8Array(bits))
-    
       .map(byte => byte.toString(16).padStart(2, "0"))
       .join("");
 
@@ -358,7 +358,7 @@ function expiration(minutes) {
 }
 
 function isExpired(value) {
-  return !value  Date.parse(value) <= Date.now();
+  return !value || Date.parse(value) <= Date.now();
 }
 
 // إرسال البريد الإلكتروني عبر Resend
@@ -366,7 +366,7 @@ async function sendEmail(env, to, subject, html) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      "Authorization": Bearer ${env.RESEND_API_KEY},
+      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -386,14 +386,14 @@ async function sendEmail(env, to, subject, html) {
 
 // تصميم رسالة رمز التأكيد
 function emailCodeHtml(code) {
-  return 
+  return `
     <div dir="rtl" style="font-family:Arial;text-align:center;padding:25px">
       <h2>مرحباً بك في دفتري</h2>
       <p>رمز تأكيد حسابك هو:</p>
       <h1 style="letter-spacing:8px">${code}</h1>
       <p>صلاحية الرمز ${CODE_MINUTES} دقائق.</p>
     </div>
-  ;
+  `;
 }
 
 // إنشاء رمز التأكيد وإرساله
@@ -407,7 +407,7 @@ async function createEmailCode(env, user) {
     Date.now() + CODE_MINUTES * 60 * 1000
   ).toISOString();
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO email_codes (
       user_id,
       code_hash,
@@ -416,7 +416,7 @@ async function createEmailCode(env, user) {
     ON CONFLICT(user_id) DO UPDATE SET
       code_hash = excluded.code_hash,
       expires_at = excluded.expires_at
-  ).bind(
+  `).bind(
     user.id,
     codeHash,
     expiresAt
@@ -461,13 +461,13 @@ async function createSession(request, env, userId) {
   const tokenHash = await sha256(token);
   const expiresAt = expiration(SESSION_DAYS * 24 * 60);
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO sessions (
       token_hash,
       user_id,
       expires_at
     ) VALUES (?, ?, ?)
-  ).bind(
+  `).bind(
     tokenHash,
     userId,
     expiresAt
@@ -481,10 +481,10 @@ async function createSession(request, env, userId) {
     200,
     request,
     {
-      "Set-Cookie": daftari_session=${token}; ${cookieOptions(
+      "Set-Cookie": `daftari_session=${token}; ${cookieOptions(
         request,
         SESSION_DAYS * 24 * 60 * 60
-      )}
+      )}`
     }
   );
 }
@@ -502,7 +502,7 @@ async function requireSession(request, env) {
   const tokenHash = await sha256(token);
 
   const result = await env.DB.prepare(
-    SELECT
+    `SELECT
       s.token_hash,
       s.expires_at,
       u.id,
@@ -515,7 +515,7 @@ async function requireSession(request, env) {
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ?
-    LIMIT 1
+    LIMIT 1`
   ).bind(tokenHash).first();
 
   if (!result) {
@@ -532,6 +532,7 @@ async function requireSession(request, env) {
     await env.DB.prepare(
       "DELETE FROM sessions WHERE token_hash = ?"
     ).bind(tokenHash).run();
+
     return {
       error: json(
         { error: "انتهت الجلسة، يرجى تسجيل الدخول مجدداً." },
@@ -588,11 +589,11 @@ async function register(request, env) {
     : "";
 
   if (
-    !ownerName 
-    !fatherName 
-    !shopName 
-    !shopAddress 
-    !email 
+    !ownerName ||
+    !fatherName ||
+    !shopName ||
+    !shopAddress ||
+    !email ||
     !password
   ) {
     return json(
@@ -610,7 +611,7 @@ async function register(request, env) {
     );
   }
 
-  if (password.length < 6  password.length > 128) {
+  if (password.length < 6 || password.length > 128) {
     return json(
       { success: false, message: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً" },
       400,
@@ -642,7 +643,7 @@ async function register(request, env) {
     created_at: new Date().toISOString()
   };
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO users (
       id,
       owner_name,
@@ -654,7 +655,7 @@ async function register(request, env) {
       email_verified,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  ).bind(
+  `).bind(
     user.id,
     user.owner_name,
     user.father_name,
@@ -712,11 +713,11 @@ async function verifyEmail(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT id, email_verified FROM users
     WHERE email = ?
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
 
   if (!user) {
     return json(
@@ -733,11 +734,12 @@ async function verifyEmail(request, env) {
       request
     );
   }
-  const savedCode = await env.DB.prepare(
+
+  const savedCode = await env.DB.prepare(`
     SELECT code_hash, expires_at FROM email_codes
     WHERE user_id = ?
     LIMIT 1
-  ).bind(user.id).first();
+  `).bind(user.id).first();
 
   if (!savedCode || isExpired(savedCode.expires_at)) {
     return json(
@@ -799,14 +801,14 @@ async function resendCode(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT id, email, email_verified
     FROM users
     WHERE email = ?
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
 
-  if (!user  user.email_verified === 1) {
+  if (!user || user.email_verified === 1) {
     return json(
       { success: true, message: "إذا كان الحساب يحتاج تأكيداً فسيتم إرسال الرمز." },
       200,
@@ -843,7 +845,7 @@ async function login(request, env) {
     ? body.password
     : "";
 
-  if (!validEmail(email)  !password) {
+  if (!validEmail(email) || !password) {
     return json(
       { success: false, message: "يرجى إدخال البريد وكلمة المرور" },
       400,
@@ -851,7 +853,7 @@ async function login(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT
       id,
       owner_name,
@@ -864,7 +866,7 @@ async function login(request, env) {
     FROM users
     WHERE email = ?
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
 
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     return json(
@@ -931,6 +933,7 @@ async function logout(request, env) {
 
   return clearCookie(request);
 }
+
 // ==========================================
 // FORGOT PASSWORD
 // ==========================================
@@ -961,13 +964,13 @@ async function forgotPassword(request, env) {
     message: "إذا كان البريد مسجلاً ومؤكداً فستصلك رسالة استعادة كلمة المرور."
   };
 
-  const user = await env.DB.prepare(
+  const user = await env.DB.prepare(`
     SELECT id, email
     FROM users
     WHERE email = ?
       AND email_verified = 1
     LIMIT 1
-  ).bind(email).first();
+  `).bind(email).first();
 
   if (!user) {
     return json(genericMessage, 200, request);
@@ -985,22 +988,22 @@ async function forgotPassword(request, env) {
     "DELETE FROM reset_tokens WHERE user_id = ?"
   ).bind(user.id).run();
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO reset_tokens (
       token_hash,
       user_id,
       expires_at
     ) VALUES (?, ?, ?)
-  ).bind(
+  `).bind(
     tokenHash,
     user.id,
     expiresAt
   ).run();
 
   const baseUrl = env.APP_BASE_URL.replace(/\/+$/, "");
-  const resetUrl = ${baseUrl}/?token=${encodeURIComponent(token)};
+  const resetUrl = `${baseUrl}/?token=${encodeURIComponent(token)}`;
 
-  const html = 
+  const html = `
     <div dir="rtl" style="font-family:Arial;text-align:center;padding:30px">
       <h2>دفتري - استعادة كلمة المرور</h2>
       <p>اضغط على الرابط التالي لتغيير كلمة المرور:</p>
@@ -1013,7 +1016,7 @@ async function forgotPassword(request, env) {
       <p>صلاحية الرابط 30 دقيقة فقط.</p>
       <p>إذا لم تطلب الاستعادة، تجاهل هذه الرسالة.</p>
     </div>
-  ;
+  `;
 
   await sendEmail(
     env,
@@ -1045,7 +1048,7 @@ async function resetPassword(request, env) {
     ? body.password
     : "";
 
-  if (!token  password.length < 6  password.length > 128) {
+  if (!token || password.length < 6 || password.length > 128) {
     return json(
       { success: false, message: "الرابط أو كلمة المرور غير صحيح" },
       400,
@@ -1055,12 +1058,12 @@ async function resetPassword(request, env) {
 
   const tokenHash = await sha256(token);
 
-  const savedToken = await env.DB.prepare(
+  const savedToken = await env.DB.prepare(`
     SELECT token_hash, user_id, expires_at
     FROM reset_tokens
     WHERE token_hash = ?
     LIMIT 1
-  ).bind(tokenHash).first();
+  `).bind(tokenHash).first();
 
   if (!savedToken || isExpired(savedToken.expires_at)) {
     return json(
@@ -1092,6 +1095,7 @@ async function resetPassword(request, env) {
     request
   );
 }
+
 // ==========================================
 // PART 4: CUSTOMERS & PAYMENTS
 // ==========================================
@@ -1101,7 +1105,7 @@ async function resetPassword(request, env) {
 // ==========================================
 
 async function listCustomers(request, env, user) {
-  const result = await env.DB.prepare(
+  const result = await env.DB.prepare(`
     SELECT
       id,
       name,
@@ -1116,12 +1120,12 @@ async function listCustomers(request, env, user) {
     FROM customers
     WHERE user_id = ?
     ORDER BY created_at DESC
-  ).bind(user.id).all();
+  `).bind(user.id).all();
 
   return json(
     {
       success: true,
-      customers: result.results  []
+      customers: result.results || []
     },
     200,
     request
@@ -1152,7 +1156,7 @@ async function createCustomer(request, env, user) {
   const paid = body.paid === undefined ? 0 : body.paid;
   const monthly = body.monthly === undefined ? 0 : body.monthly;
 
-  if (!name  !purchaseName) {
+  if (!name || !purchaseName) {
     return json(
       { success: false, message: "يرجى إدخال اسم الزبون واسم المادة" },
       400,
@@ -1161,8 +1165,8 @@ async function createCustomer(request, env, user) {
   }
 
   if (
-    !validAmount(total) 
-    !validAmount(paid, true) 
+    !validAmount(total) ||
+    !validAmount(paid, true) ||
     !validAmount(monthly, true) ||
     paid > total
   ) {
@@ -1177,7 +1181,7 @@ async function createCustomer(request, env, user) {
   const now = new Date().toISOString();
 
   const statements = [
-    env.DB.prepare(
+    env.DB.prepare(`
       INSERT INTO customers (
         id,
         user_id,
@@ -1190,7 +1194,7 @@ async function createCustomer(request, env, user) {
         monthly,
         created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ).bind(
+    `).bind(
       customerId,
       user.id,
       name,
@@ -1203,7 +1207,7 @@ async function createCustomer(request, env, user) {
       now
     ),
 
-    env.DB.prepare(
+    env.DB.prepare(`
       INSERT INTO payment_history (
         id,
         customer_id,
@@ -1212,11 +1216,11 @@ async function createCustomer(request, env, user) {
         amount,
         created_at
       ) VALUES (?, ?, ?, ?, ?, ?)
-    ).bind(
+    `).bind(
       randomHex(16),
       customerId,
       user.id,
-      إضافة مشتريات: ${purchaseName},
+      `إضافة مشتريات: ${purchaseName}`,
       total,
       now
     )
@@ -1224,7 +1228,7 @@ async function createCustomer(request, env, user) {
 
   if (paid > 0) {
     statements.push(
-      env.DB.prepare(
+      env.DB.prepare(`
         INSERT INTO payment_history (
           id,
           customer_id,
@@ -1233,7 +1237,7 @@ async function createCustomer(request, env, user) {
           amount,
           created_at
         ) VALUES (?, ?, ?, ?, ?, ?)
-      ).bind(
+      `).bind(
         randomHex(16),
         customerId,
         user.id,
@@ -1273,7 +1277,7 @@ async function createCustomer(request, env, user) {
 // ==========================================
 
 async function getCustomerDetails(request, env, user, customerId) {
-  const customer = await env.DB.prepare(
+  const customer = await env.DB.prepare(`
     SELECT
       id,
       name,
@@ -1288,7 +1292,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).first();
@@ -1300,7 +1304,8 @@ async function getCustomerDetails(request, env, user, customerId) {
       request
     );
   }
-  const history = await env.DB.prepare(
+
+  const history = await env.DB.prepare(`
     SELECT
       id,
       description,
@@ -1309,7 +1314,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     FROM payment_history
     WHERE customer_id = ? AND user_id = ?
     ORDER BY created_at DESC
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).all();
@@ -1318,7 +1323,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     {
       success: true,
       customer,
-      history: history.results  []
+      history: history.results || []
     },
     200,
     request
@@ -1342,7 +1347,7 @@ async function addPayment(request, env, user, customerId) {
 
   const amount = body.amount;
   const description = cleanText(
-    body.description  "تسديد قسط",
+    body.description || "تسديد قسط",
     200
   );
 
@@ -1354,12 +1359,12 @@ async function addPayment(request, env, user, customerId) {
     );
   }
 
-  const customer = await env.DB.prepare(
+  const customer = await env.DB.prepare(`
     SELECT id, total, paid
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).first();
@@ -1386,13 +1391,13 @@ async function addPayment(request, env, user, customerId) {
     );
   }
 
-  const update = await env.DB.prepare(
+  const update = await env.DB.prepare(`
     UPDATE customers
     SET paid = paid + ?
     WHERE id = ?
       AND user_id = ?
       AND paid + ? <= total
-  ).bind(
+  `).bind(
     amount,
     customerId,
     user.id,
@@ -1412,7 +1417,7 @@ async function addPayment(request, env, user, customerId) {
 
   const now = new Date().toISOString();
 
-  await env.DB.prepare(
+  await env.DB.prepare(`
     INSERT INTO payment_history (
       id,
       customer_id,
@@ -1421,7 +1426,7 @@ async function addPayment(request, env, user, customerId) {
       amount,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?)
-  ).bind(
+  `).bind(
     randomHex(16),
     customerId,
     user.id,
@@ -1430,7 +1435,7 @@ async function addPayment(request, env, user, customerId) {
     now
   ).run();
 
-  const updatedCustomer = await env.DB.prepare(
+  const updatedCustomer = await env.DB.prepare(`
     SELECT
       id,
       name,
@@ -1440,7 +1445,7 @@ async function addPayment(request, env, user, customerId) {
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  ).bind(
+  `).bind(
     customerId,
     user.id
   ).first();
