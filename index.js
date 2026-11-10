@@ -80,7 +80,7 @@ export default {
         if (session.error) return session.error;
 
         const result = await env.DB.prepare(
-          `SELECT
+          SELECT
             id,
             name,
             phone,
@@ -93,7 +93,7 @@ export default {
             created_at AS createdAt
           FROM customers
           WHERE user_id = ?
-          ORDER BY created_at DESC`
+          ORDER BY created_at DESC
         ).bind(session.user.id).all();
 
         return json({
@@ -123,9 +123,13 @@ export default {
         const session = await requireSession(request, env);
 
         if (session.error) return session.error;
-return await getCustomerDetails(request, env, session.user, customerMatch[1]);
 
-
+        return await getCustomerDetails(
+          request,
+          env,
+          session.user,
+          customerMatch[1]
+        );
       }
 
       // Customer payment
@@ -190,7 +194,7 @@ function cookieOptions(request, maxAge) {
     ? "; Secure"
     : "";
 
-  return `HttpOnly; Path=/; SameSite=Lax;Max-Age=${maxAge}${secure}`;
+  return HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure};
 }
 
 function clearCookie(request) {
@@ -199,7 +203,7 @@ function clearCookie(request) {
     200,
     request,
     {
-      "Set-Cookie": `daftari_session=; ${cookieOptions(request, 0)}`
+      "Set-Cookie": daftari_session=; ${cookieOptions(request, 0)}
     }
   );
 }
@@ -208,7 +212,7 @@ async function readBody(request) {
   try {
     const body = await request.json();
 
-    if (!body || typeof body !== "object" ||
+    if (!body  typeof body !== "object" 
       Array.isArray(body)) {
       return null;
     }
@@ -290,14 +294,14 @@ async function hashPassword(password) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  return `pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash}`;
+  return pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash};
 }
 
 async function verifyPassword(password, stored) {
   try {
     const parts = stored.split("$");
 
-    if (parts.length !== 4 || parts[0] !==  "pbkdf2") {
+    if (parts.length !== 4  parts[0] !== "pbkdf2") {
       return false;
     }
 
@@ -306,14 +310,14 @@ async function verifyPassword(password, stored) {
     const originalHash = parts[3];
 
     if (
-  !Number.isInteger(iterations) ||
-  iterations < 100000 ||
-  iterations > 1000000 ||
-  !/^[a-f0-9]{32}$/.test(salt) ||
-  !/^[a-f0-9]{64}$/.test(originalHash)
-) {
-  return false;
-}
+      !Number.isInteger(iterations) 
+      iterations < 100000 
+      iterations > 1000000 
+      !/^[a-f0-9]{32}$/.test(salt) 
+      !/^[a-f0-9]{64}$/.test(originalHash)
+    ) {
+      return false;
+    }
 
     const key = await crypto.subtle.importKey(
       "raw",
@@ -354,14 +358,15 @@ function expiration(minutes) {
 }
 
 function isExpired(value) {
-  return !value || Date.parse(value) <= Date.now();
+  return !value  Date.parse(value) <= Date.now();
 }
+
 // إرسال البريد الإلكتروني عبر Resend
 async function sendEmail(env, to, subject, html) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+      "Authorization": Bearer ${env.RESEND_API_KEY},
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -381,14 +386,14 @@ async function sendEmail(env, to, subject, html) {
 
 // تصميم رسالة رمز التأكيد
 function emailCodeHtml(code) {
-  return `
+  return 
     <div dir="rtl" style="font-family:Arial;text-align:center;padding:25px">
       <h2>مرحباً بك في دفتري</h2>
       <p>رمز تأكيد حسابك هو:</p>
       <h1 style="letter-spacing:8px">${code}</h1>
       <p>صلاحية الرمز ${CODE_MINUTES} دقائق.</p>
     </div>
-  `;
+  ;
 }
 
 // إنشاء رمز التأكيد وإرساله
@@ -402,7 +407,7 @@ async function createEmailCode(env, user) {
     Date.now() + CODE_MINUTES * 60 * 1000
   ).toISOString();
 
-  await env.DB.prepare(`
+  await env.DB.prepare(
     INSERT INTO email_codes (
       user_id,
       code_hash,
@@ -411,7 +416,7 @@ async function createEmailCode(env, user) {
     ON CONFLICT(user_id) DO UPDATE SET
       code_hash = excluded.code_hash,
       expires_at = excluded.expires_at
-  `).bind(
+  ).bind(
     user.id,
     codeHash,
     expiresAt
@@ -445,6 +450,7 @@ function getCookie(request, name) {
 
   return null;
 }
+
 // ==========================================
 // PART 3: AUTHENTICATION & USER SESSIONS
 // ==========================================
@@ -455,13 +461,13 @@ async function createSession(request, env, userId) {
   const tokenHash = await sha256(token);
   const expiresAt = expiration(SESSION_DAYS * 24 * 60);
 
-  await env.DB.prepare(`
+  await env.DB.prepare(
     INSERT INTO sessions (
       token_hash,
       user_id,
       expires_at
     ) VALUES (?, ?, ?)
-  `).bind(
+  ).bind(
     tokenHash,
     userId,
     expiresAt
@@ -475,10 +481,10 @@ async function createSession(request, env, userId) {
     200,
     request,
     {
-      "Set-Cookie": `daftari_session=${token}; ${cookieOptions(
+      "Set-Cookie": daftari_session=${token}; ${cookieOptions(
         request,
         SESSION_DAYS * 24 * 60 * 60
-      )}`
+      )}
     }
   );
 }
@@ -487,16 +493,16 @@ async function createSession(request, env, userId) {
 async function requireSession(request, env) {
   const token = getCookie(request, "daftari_session");
 
-if (!token) {
-  return {
-    error: json({ error: "يرجى تسجيل الدخول." }, 401, request)
-  };
-}
+  if (!token) {
+    return {
+      error: json({ error: "يرجى تسجيل الدخول." }, 401, request)
+    };
+  }
 
   const tokenHash = await sha256(token);
 
   const result = await env.DB.prepare(
-  `SELECT
+    SELECT
       s.token_hash,
       s.expires_at,
       u.id,
@@ -509,44 +515,54 @@ if (!token) {
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ?
-    LIMIT 1`
+    LIMIT 1
   ).bind(tokenHash).first();
-if (!result) {
-  return {
-    error: json({ error: "الجلسة غير صالحة، يرجى تسجيل الدخول." }, 401, request)
-  };
-}
+
+  if (!result) {
+    return {
+      error: json(
+        { error: "الجلسة غير صالحة، يرجى تسجيل الدخول." },
+        401,
+        request
+      )
+    };
+  }
 
   if (isExpired(result.expires_at)) {
     await env.DB.prepare(
       "DELETE FROM sessions WHERE token_hash = ?"
     ).bind(tokenHash).run();
-
     return {
-  error: json({ error: "انتهت الجلسة، يرجى تسجيل الدخول مجدداً." }, 401, request)
-};
+      error: json(
+        { error: "انتهت الجلسة، يرجى تسجيل الدخول مجدداً." },
+        401,
+        request
+      )
+    };
   }
 
- if (result.email_verified !== 1) {
+  if (result.email_verified !== 1) {
+    return {
+      error: json(
+        { error: "يرجى تأكيد البريد الإلكتروني أولاً." },
+        403,
+        request
+      )
+    };
+  }
+
   return {
-    error: json(
-      { error: "يرجى تأكيد البريد الإلكتروني أولاً." },
-      403,
-      request
-    )
+    user: {
+      id: result.id,
+      ownerName: result.owner_name,
+      fatherName: result.father_name,
+      shopName: result.shop_name,
+      shopAddress: result.shop_address,
+      email: result.email
+    }
   };
 }
- return {
-  user: {
-    id: result.id,
-    ownerName: result.owner_name,
-    fatherName: result.father_name,
-    shopName: result.shop_name,
-    shopAddress: result.shop_address,
-    email: result.email
-  }
-};
-}
+
 // ==========================================
 // REGISTER
 // ==========================================
@@ -572,11 +588,11 @@ async function register(request, env) {
     : "";
 
   if (
-    !ownerName ||
-    !fatherName ||
-    !shopName ||
-    !shopAddress ||
-    !email ||
+    !ownerName 
+    !fatherName 
+    !shopName 
+    !shopAddress 
+    !email 
     !password
   ) {
     return json(
@@ -594,7 +610,7 @@ async function register(request, env) {
     );
   }
 
-  if (password.length < 6 || password.length > 128) {
+  if (password.length < 6  password.length > 128) {
     return json(
       { success: false, message: "كلمة المرور يجب أن تكون بين 6 و128 حرفاً" },
       400,
@@ -626,7 +642,7 @@ async function register(request, env) {
     created_at: new Date().toISOString()
   };
 
-  await env.DB.prepare(`
+  await env.DB.prepare(
     INSERT INTO users (
       id,
       owner_name,
@@ -638,7 +654,7 @@ async function register(request, env) {
       email_verified,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
+  ).bind(
     user.id,
     user.owner_name,
     user.father_name,
@@ -652,7 +668,7 @@ async function register(request, env) {
 
   try {
     await createEmailCode(env, user);
-    } catch (error) {
+  } catch (error) {
     await env.DB.prepare(
       "DELETE FROM users WHERE id = ?"
     ).bind(user.id).run();
@@ -696,11 +712,11 @@ async function verifyEmail(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(`
+  const user = await env.DB.prepare(
     SELECT id, email_verified FROM users
     WHERE email = ?
     LIMIT 1
-  `).bind(email).first();
+  ).bind(email).first();
 
   if (!user) {
     return json(
@@ -717,12 +733,11 @@ async function verifyEmail(request, env) {
       request
     );
   }
-
-  const savedCode = await env.DB.prepare(`
+  const savedCode = await env.DB.prepare(
     SELECT code_hash, expires_at FROM email_codes
     WHERE user_id = ?
     LIMIT 1
-  `).bind(user.id).first();
+  ).bind(user.id).first();
 
   if (!savedCode || isExpired(savedCode.expires_at)) {
     return json(
@@ -731,7 +746,7 @@ async function verifyEmail(request, env) {
       request
     );
   }
-  
+
   const submittedHash = await sha256(code);
 
   if (submittedHash !== savedCode.code_hash) {
@@ -784,7 +799,7 @@ async function resendCode(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(`
+  const user = await env.DB.prepare(
     SELECT id, email, email_verified
     FROM users
     WHERE email = ?
@@ -828,7 +843,7 @@ async function login(request, env) {
     ? body.password
     : "";
 
-  if (!validEmail(email) || !password) {
+  if (!validEmail(email)  !password) {
     return json(
       { success: false, message: "يرجى إدخال البريد وكلمة المرور" },
       400,
@@ -836,7 +851,7 @@ async function login(request, env) {
     );
   }
 
-  const user = await env.DB.prepare(`
+  const user = await env.DB.prepare(
     SELECT
       id,
       owner_name,
@@ -849,7 +864,8 @@ async function login(request, env) {
     FROM users
     WHERE email = ?
     LIMIT 1
-  `).bind(email).first();
+  ).bind(email).first();
+
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     return json(
       { success: false, message: "البريد أو كلمة المرور غير صحيحة" },
@@ -915,7 +931,6 @@ async function logout(request, env) {
 
   return clearCookie(request);
 }
-
 // ==========================================
 // FORGOT PASSWORD
 // ==========================================
@@ -1029,6 +1044,7 @@ async function resetPassword(request, env) {
   const password = typeof body.password === "string"
     ? body.password
     : "";
+
   if (!token  password.length < 6  password.length > 128) {
     return json(
       { success: false, message: "الرابط أو كلمة المرور غير صحيح" },
@@ -1284,15 +1300,15 @@ async function getCustomerDetails(request, env, user, customerId) {
       request
     );
   }
- const history = await env.DB.prepare(
-    `SELECT
+  const history = await env.DB.prepare(
+    SELECT
       id,
       description,
       amount,
       created_at AS date
     FROM payment_history
     WHERE customer_id = ? AND user_id = ?
-    ORDER BY created_at DESC`
+    ORDER BY created_at DESC
   ).bind(
     customerId,
     user.id
@@ -1302,7 +1318,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     {
       success: true,
       customer,
-      history: history.results || []
+      history: history.results  []
     },
     200,
     request
@@ -1326,7 +1342,7 @@ async function addPayment(request, env, user, customerId) {
 
   const amount = body.amount;
   const description = cleanText(
-    body.description || "تسديد قسط",
+    body.description  "تسديد قسط",
     200
   );
 
@@ -1339,10 +1355,10 @@ async function addPayment(request, env, user, customerId) {
   }
 
   const customer = await env.DB.prepare(
-    `SELECT id, total, paid
+    SELECT id, total, paid
     FROM customers
     WHERE id = ? AND user_id = ?
-    LIMIT 1`
+    LIMIT 1
   ).bind(
     customerId,
     user.id
@@ -1371,11 +1387,11 @@ async function addPayment(request, env, user, customerId) {
   }
 
   const update = await env.DB.prepare(
-    'UPDATE customers
+    UPDATE customers
     SET paid = paid + ?
     WHERE id = ?
       AND user_id = ?
-      AND paid + ? <= total'
+      AND paid + ? <= total
   ).bind(
     amount,
     customerId,
@@ -1397,14 +1413,14 @@ async function addPayment(request, env, user, customerId) {
   const now = new Date().toISOString();
 
   await env.DB.prepare(
-    'INSERT INTO payment_history (
+    INSERT INTO payment_history (
       id,
       customer_id,
       user_id,
       description,
       amount,
       created_at
-    ) VALUES (?, ?, ?, ?, ?, ?)'
+    ) VALUES (?, ?, ?, ?, ?, ?)
   ).bind(
     randomHex(16),
     customerId,
@@ -1415,7 +1431,7 @@ async function addPayment(request, env, user, customerId) {
   ).run();
 
   const updatedCustomer = await env.DB.prepare(
-    'SELECT
+    SELECT
       id,
       name,
       total,
@@ -1423,7 +1439,7 @@ async function addPayment(request, env, user, customerId) {
       (total - paid) AS remaining
     FROM customers
     WHERE id = ? AND user_id = ?
-    LIMIT 1'
+    LIMIT 1
   ).bind(
     customerId,
     user.id
