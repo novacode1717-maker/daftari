@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   owner_name TEXT NOT NULL,
@@ -6,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   shop_address TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  verified INTEGER NOT NULL DEFAULT 0,
+  email_verified INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 
@@ -18,15 +20,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS email_codes (
-  email TEXT PRIMARY KEY,
+  user_id TEXT PRIMARY KEY,
   code_hash TEXT NOT NULL,
-  expires_at INTEGER NOT NULL
+  expires_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS reset_tokens (
   token_hash TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-  expires_at INTEGER NOT NULL,
+  expires_at TEXT NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
