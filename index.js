@@ -25,7 +25,7 @@ export default {
         status: 204,
         headers: {
           ...corsHeaders,
-          "Access-Control-Allow-Origin": url.origin
+         "Access-Control-Allow-Origin": request.headers.get("Origin") || url.origin
         }
       });
     }
@@ -1391,7 +1391,7 @@ async function addPayment(request, env, user, customerId) {
     );
   }
 
-  const update = await env.DB.prepare(`
+ const update = await env.DB.prepare(`
     UPDATE customers
     SET paid = paid + ?
     WHERE id = ?
@@ -1434,6 +1434,51 @@ async function addPayment(request, env, user, customerId) {
     amount,
     now
   ).run();
+  const now = new Date().toISOString();
+
+  const results = await env.DB.batch([
+    env.DB.prepare(`
+      UPDATE customers
+      SET paid = paid + ?
+      WHERE id = ?
+        AND user_id = ?
+        AND paid + ? <= total
+    `).bind(
+      amount,
+      customerId,
+      user.id,
+      amount
+    ),
+
+    env.DB.prepare(`
+      INSERT INTO payment_history (
+        id,
+        customer_id,
+        user_id,
+        description,
+        amount,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      randomHex(16),
+      customerId,
+      user.id,
+      description,
+      amount,
+      now
+    )
+  ]);
+
+  if (!results[0].meta || results[0].meta.changes !== 1) {
+    return json(
+      {
+        success: false,
+        message: "تعذر تسجيل الدفعة. حدّث الصفحة وحاول مرة أخرى."
+      },
+      409,
+      request
+    );
+  }
 
   const updatedCustomer = await env.DB.prepare(`
     SELECT
