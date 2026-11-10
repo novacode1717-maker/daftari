@@ -286,7 +286,7 @@ footer {
     padding: 10px;
   }
 }
-    </style>
+</style>
 </head>
 
 <body>
@@ -363,7 +363,7 @@ footer {
       >
 
       <label for="registerPassword">
-        كلمة المرور 6 حرفاً على الأقل)
+        كلمة المرور (6 حرفاً على الأقل)
       </label>
       <input
         id="registerPassword"
@@ -377,7 +377,7 @@ footer {
       <input
         id="confirmPassword"
         type="password"
-        minlength="12"
+        minlength="6"
         autocomplete="new-password"
         required
       >
@@ -431,7 +431,7 @@ footer {
       <input
         id="resetPassword"
         type="password"
-        minlength="12"
+        minlength="6"
         autocomplete="new-password"
         required
       >
@@ -440,7 +440,7 @@ footer {
       <input
         id="resetConfirm"
         type="password"
-        minlength="12"
+        minlength="6"
         autocomplete="new-password"
         required
       >
@@ -540,7 +540,7 @@ $("registerForm").addEventListener("submit", async event => {
     $("verifyEmail").value = $("registerEmail").value.trim();
     showForm("verifyForm");
     showMessage(
-      result.message  || "تحقق من بريدك الإلكتروني للحصول على رمز التفعيل.",
+      result.message || "تحقق من بريدك الإلكتروني للحصول على رمز التفعيل.",
       true
     );
   } catch (error) {
@@ -611,10 +611,10 @@ $("forgotForm").addEventListener("submit", async event => {
     });
 
     showMessage(
-      result.message  "إذا كان البريد مسجلاً، فستصلك تعليمات الاسترجاع.",
+      result.message || "إذا كان البريد مسجلاً، فستصلك تعليمات الاسترجاع.",
       true
     );
-    } catch (error) {
+  } catch (error) {
     showMessage(error.message);
   }
 });
