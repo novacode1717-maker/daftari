@@ -471,7 +471,7 @@ function showForm(id) {
   const isReset = id === "resetForm";
   $("authTabs").classList.toggle(
     "hidden",
-    isReset  id === "verifyForm"
+    isReset || id === "verifyForm"
   );
 }
 
@@ -493,7 +493,7 @@ async function sendRequest(path, data) {
 
   if (!response.ok) {
     throw new Error(
-      result.error  result.message || "حدث خطأ، حاول مرة أخرى."
+      result.error || result.message || "حدث خطأ، حاول مرة أخرى."
     );
   }
 
