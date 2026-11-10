@@ -1334,7 +1334,58 @@ async function getCustomerDetails(request, env, user, customerId) {
 // ADD CUSTOMER PAYMENT
 // ==========================================
 
- if (amount > remaining) {
+async function addPayment(request, env, user, customerId) {
+  const body = await readBody(request);
+
+  if (!body) {
+    return json(
+      {
+        success: false,
+        message: "بيانات الطلب غير صحيحة"
+      },
+      400,
+      request
+    );
+  }
+
+  const amount = Number(body.amount);
+  const description = cleanText(body.description || "دفعة", 200);
+
+  if (!validAmount(amount)) {
+    return json(
+      {
+        success: false,
+        message: "مبلغ الدفعة غير صحيح"
+      },
+      400,
+      request
+    );
+  }
+
+  const customer = await env.DB.prepare(
+    SELECT id, total, paid
+    FROM customers
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  ).bind(
+    customerId,
+    user.id
+  ).first();
+
+  if (!customer) {
+    return json(
+      {
+        success: false,
+        message: "الزبون غير موجود"
+      },
+      404,
+      request
+    );
+  }
+
+  const remaining = customer.total - customer.paid;
+
+  if (amount > remaining) {
     return json(
       {
         success: false,
@@ -1346,49 +1397,61 @@ async function getCustomerDetails(request, env, user, customerId) {
     );
   }
 
- const update = await env.DB.prepare(`
-    UPDATE customers
-    SET paid = paid + ?
-    WHERE id = ?
-      AND user_id = ?
-      AND paid + ? <= total
-  `).bind(
-    amount,
-    customerId,
-    user.id,
-    amount
-  ).run();
-
-  if (!update.meta || update.meta.changes !== 1) {
-    return json(
-      {
-        success: false,
-        message: "تعذر تسجيل الدفعة. حدّث الصفحة وحاول مرة أخرى."
-      },
-      409,
-      request
-    );
-  }
-
   const now = new Date().toISOString();
+  const newPaid = customer.paid + amount;
 
   const results = await env.DB.batch([
-    env.DB.prepare(`
+    env.DB.prepare(
       UPDATE customers
       SET paid = paid + ?
       WHERE id = ?
         AND user_id = ?
+        AND paid = ?
         AND paid + ? <= total
-    `).bind(
+    ).bind(
       amount,
       customerId,
       user.id,
+      customer.paid,
       amount
     ),
 
-    
+    env.DB.prepare(
+      INSERT INTO payment_history (
+        id,
+        customer_id,
+        user_id,
+        description,
+        amount,
+        created_at
+      )
+      SELECT ?, ?, ?, ?, ?, ?
+      WHERE EXISTS (
+        SELECT 1
+        FROM customers
+        WHERE id = ?
+          AND user_id = ?
+          AND paid = ?
+      )
+    ).bind(
+      randomHex(16),
+      customerId,
+      user.id,
+      description,
+      amount,
+      now,
+      customerId,
+      user.id,
+      newPaid
+    )
+  ]);
 
-  if (!results[0].meta || results[0].meta.changes !== 1) {
+  if (
+    !results[0].meta 
+    results[0].meta.changes !== 1 
+    !results[1].meta ||
+    results[1].meta.changes !== 1
+  ) {
     return json(
       {
         success: false,
@@ -1399,7 +1462,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     );
   }
 
-  const updatedCustomer = await env.DB.prepare(`
+  const updatedCustomer = await env.DB.prepare(
     SELECT
       id,
       name,
@@ -1409,7 +1472,7 @@ async function getCustomerDetails(request, env, user, customerId) {
     FROM customers
     WHERE id = ? AND user_id = ?
     LIMIT 1
-  `).bind(
+  ).bind(
     customerId,
     user.id
   ).first();
@@ -1424,6 +1487,10 @@ async function getCustomerDetails(request, env, user, customerId) {
     request
   );
 }
+
+// ==========================================
+// END OF DAFTARI WORKER CODE
+// ==========================================
 
 // ==========================================
 // END OF DAFTARI WORKER CODE
