@@ -1450,7 +1450,7 @@ async function addPayment(request, env, user, customerId) {
     !results[0].meta ||
     results[0].meta.changes !== 1 ||
     !results[1].meta ||
-    results[1].meta.changes !== 1 ||
+    results[1].meta.changes !== 1 
   ) {
     return json(
       {
