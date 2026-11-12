@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "daftari-as",
+  "main": "index.js",
+  "compatibility_date": "2024-10-31",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "daftari_db",
+      "database_id": "d6716de4-8bdf-4375-91dd-550c5f175690"
+    }
+  ]
+}
