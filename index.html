@@ -267,8 +267,6 @@ let busy = false;
 function showForm(id) {
   forms.forEach(formId => $(formId).classList.add("hidden"));
   $(id).classList.remove("hidden");
-  $("authMessage").textContent = "";
-  $("authMessage").className = "";
   $("authTabs").classList.toggle("hidden", id === "resetForm" || id === "verifyForm");
 }
 
@@ -284,14 +282,40 @@ function money(value) {
   }) + " د.ع";
 }
 
+function showAuth(message = "") {
+  $("dashboardSection").classList.add("hidden");
+  $("authSection").classList.remove("hidden");
+  $("headerStatus").textContent = "حسابك التجاري";
+  showForm("loginForm");
+  if (message) showMessage(message);
+}
+
 async function api(path, options = {}) {
-  const response = await fetch("/api" + path, {
-    ...options,
-    credentials: "same-origin",
-    headers: {
-      ...(options.body ? {"Content-Type":"application/json"} : {}),
-      ...(options.headers || {})
+  let response;
+  try {
+    response = await fetch("/api" + path, {
+      ...options,
+      credentials: "same-origin",
+      headers: {
+        ...(options.body ? {"Content-Type":"application/json"} : {}),
+        ...(options.headers || {})
+      }
+    });
+  } catch (networkError) {
+    throw new Error("تعذر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.");
+  }
+
+  const isJson = (response.headers.get("content-type") || "").includes("application/json");
+  const result = isJson ? await response.json().catch(() => ({})) : {};
+
+  if (!response.ok) {
+    if (response.status === 401 && path !== "/auth/login") {
+      showAuth("انتهت الجلسة، سجّل الدخول مرة أخرى.");
     }
+    throw new Error(result.error || result.message || `خطأ (${response.status})، حاول مرة أخرى.`);
+  }
+  return result;
+}
   });
 
   const result = await response.json().catch(() => ({}));
