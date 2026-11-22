@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -318,16 +317,7 @@ async function api(path, options = {}) {
 }
   });
 
-  const result = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    if (response.status === 401 && path !== "/auth/login") {
-      showAuth();
-    }
-    throw new Error(result.error || result.message || "حدث خطأ، حاول مرة أخرى.");
-  }
-  return result;
-}
+ 
 
 function post(path, data) {
   return api(path, {
@@ -335,14 +325,6 @@ function post(path, data) {
     body: JSON.stringify(data)
   });
 }
-
-function showAuth() {
-  $("dashboardSection").classList.add("hidden");
-  $("authSection").classList.remove("hidden");
-  $("headerStatus").textContent = "حسابك التجاري";
-  showForm("loginForm");
-}
-
 function showDashboard() {
   $("authSection").classList.add("hidden");
   $("dashboardSection").classList.remove("hidden");
