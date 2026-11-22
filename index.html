@@ -288,7 +288,6 @@ function showAuth(message = "") {
   showForm("loginForm");
   if (message) showMessage(message);
 }
-
 async function api(path, options = {}) {
   let response;
   try {
@@ -315,9 +314,6 @@ async function api(path, options = {}) {
   }
   return result;
 }
-  });
-
- 
 
 function post(path, data) {
   return api(path, {
